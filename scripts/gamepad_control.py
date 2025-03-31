@@ -31,6 +31,7 @@ class GamepadControl:
         self.ARM_J5_FLAG = False
         self.ARM_EE_FLAG = False
         self.ARM_HOME = False
+        self.UTILITY_BTN = False
 
     
     def initialize_gamepad(self):
@@ -82,6 +83,7 @@ class GamepadControl:
         gamepad_cmds.arm_j5 = self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1]) if self.ARM_J5_FLAG else 0.0
         gamepad_cmds.arm_ee = self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1]) if self.ARM_EE_FLAG else 0.0
         gamepad_cmds.arm_home = int(self.ARM_HOME)
+        gamepad_cmds.utility_btn = int(self.UTILITY_BTN)
 
         self.gamepad_cmds_prev = gamepad_cmds
         return gamepad_cmds
@@ -92,7 +94,8 @@ class GamepadControl:
             'ABS_X': ('abs_x', event.state),
             'ABS_Y': ('abs_y', event.state),
             'ABS_RY': ('abs_z', event.state),
-            'BTN_TL': ('MOBILE_BASE_FLAG', bool(event.state)),
+            # 'BTN_TL': ('MOBILE_BASE_FLAG', bool(event.state)),
+            'BTN_TL': ('UTILITY_BTN', bool(event.state)),
             'BTN_TR': ('ARM_FLAG', bool(event.state)),
             'BTN_WEST': ('ARM_J1_FLAG', bool(event.state)),
             'BTN_EAST': ('ARM_J2_FLAG', bool(event.state)),
