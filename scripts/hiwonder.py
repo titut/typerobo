@@ -7,8 +7,9 @@ Handles the control of the mobile base and 5-DOF robotic arm using commands rece
 
 import time
 import numpy as np
-from board_controller import BoardController
-from servo_bus_controller import ServoBusController
+from ros_robot_controller_sdk import Board
+from bus_servo_control import *
+
 import utils as ut
 
 # Robot base constants
@@ -19,8 +20,9 @@ BASE_LENGTH_Y = 0.105  # meters
 class HiwonderRobot:
     def __init__(self):
         """Initialize motor controllers, servo bus, and default robot states."""
-        self.board = BoardController()
-        self.servo_bus = ServoBusController()
+        self.board = Board()
+        self.board.enable_reception()
+        self.bsc = BusServoControl(self.board)
 
         self.joint_values = [0, 0, 90, -30, 0, 0]  # degrees
         self.home_position = [0, 0, 90, -30, 0, 0]  # degrees
@@ -30,6 +32,7 @@ class HiwonderRobot:
         ]
         self.joint_control_delay = 0.2 # secs
         self.speed_control_delay = 0.2
+        self.time_out = 100
 
         self.move_to_home_position()
 
@@ -57,6 +60,11 @@ class HiwonderRobot:
         position = [0]*3
         
         ######################################################################
+        
+        # update joint values
+        self.update_joint_values()
+
+        # print(f'Joint values: {self.get_joint_values()}')
 
         print(f'[DEBUG] XYZ position: X: {round(position[0], 3)}, Y: {round(position[1], 3)}, Z: {round(position[2], 3)} \n')
 
@@ -135,17 +143,20 @@ class HiwonderRobot:
         if radians:
             theta = np.rad2deg(theta)
 
-        theta = self.enforce_joint_limits(theta, joint_id=joint_id)
-        self.joint_values[joint_id] = theta
-
-        pulse = self.angle_to_pulse(theta)
-        self.servo_bus.move_servo(joint_id, pulse, duration)
+        theta = self.enforce_joint_limits(theta)
+        positions = []
+        for i in range(len(self.joint_values)):
+            if i == joint_id-1:
+                positions.append([joint_id, self.angle_to_pulse(theta)])
+            else:
+                positions.append([i+1, self.angle_to_pulse(self.joint_values[i])])
+        self.board.bus_servo_set_position(1, positions)
         
-        print(f"[DEBUG] Moving joint {joint_id} to {theta}° ({pulse} pulse)")
+        print(f"[DEBUG] Moving joint {joint_id} to {theta}° ({self.angle_to_pulse(theta)} pulse)")
         time.sleep(self.joint_control_delay)
 
 
-    def set_joint_values(self, thetalist: list, duration=250, radians=False):
+    def set_joint_values(self, thetalist: list, duration=1000, radians=False):
         """Moves all arm joints to the given angles.
 
         Args:
@@ -159,13 +170,52 @@ class HiwonderRobot:
             thetalist = [np.rad2deg(theta) for theta in thetalist]
 
         thetalist = self.enforce_joint_limits(thetalist)
-        self.joint_values = thetalist # updates joint_values with commanded thetalist
+        #self.joint_values = thetalist # updates joint_values with commanded thetalist
         thetalist = self.remap_joints(thetalist) # remap the joint values from software to hardware
-
+        
+        positions = []
         for joint_id, theta in enumerate(thetalist, start=1):
             pulse = self.angle_to_pulse(theta)
-            self.servo_bus.move_servo(joint_id, pulse, duration)
+            positions.append([joint_id, pulse])
+        self.board.bus_servo_set_position(1, positions)
+    
+    
+    def update_joint_value(self, joint_id: int):
+        """ Gets the joint angle """
+        count = 0 
+        while True:
+            res = self.board.bus_servo_read_position(joint_id)
+            count += 1
+            if res is not None:
+                return res
+            if count > self.time_out:
+                return None
+            time.sleep(0.01)
+            
+    
+    def update_joint_values(self):
+        """ Updates the joint angle values by calling "get_joint_value" for all joints """
+        res = [self.get_joint_value(i+1) for i in range(len(self.joint_values))]
+        res = self.remap_joints(res)
 
+        # check for Nones and replace with the previous value
+        for i in range(len(res)):
+            if res[i] is None:
+                res[i] = self.joint_values[i]
+            else:
+                res[i] = self.pulse_to_angle(res[i][0])
+        self.joint_values = res
+        
+    
+    def get_joint_value(self, joint_id: int):
+        """ Gets the joint angle """
+        return self.joint_values[joint_id]
+    
+    
+    def get_joint_values(self):
+        """ Returns all the joint angle values """
+        return self.joint_values
+    
 
     def enforce_joint_limits(self, thetalist: list) -> list:
         """Clamps joint angles within their hardware limits.
@@ -180,8 +230,11 @@ class HiwonderRobot:
 
 
     def move_to_home_position(self):
+        self.board.set_buzzer(2400, 0.1, 0.9, 1)
+        time.sleep(2)
+    
         print(f'Moving to home position...')
-        self.set_joint_values(self.home_position, duration=800)
+        self.set_joint_values(self.home_position, duration=1000)
         time.sleep(2.0)
         print(f'Arrived at home position: {self.joint_values} \n')
         time.sleep(1.0)

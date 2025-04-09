@@ -24,7 +24,8 @@ def main():
             if case == 0:
                 try:
                     joint_id = int(input("Enter joint ID (1-6): ").strip())
-                    print(f"Position of joint {joint_id}: {robot.joint_values[joint_id]}")
+                    #print(f"Position of joint {joint_id}: {robot.joint_values[joint_id]}")
+                    print(f"Position of joint {joint_id}: {robot.get_joint_value(joint_id)}")
                 except ValueError:
                     print("Invalid input. Please enter a valid joint ID.")
 
@@ -40,7 +41,7 @@ def main():
                     joint_id, theta = [int(s) for s in input("Enter joint ID and angle (e.g., 2,30): ").split(",")]
                     robot.set_joint_value(joint_id, theta)
                     time.sleep(1.0)
-                    print(f"Position of joint {joint_id}: {robot.joint_values[joint_id]}")
+                    print(f"Position of joint {joint_id}: {robot.get_joint_value(joint_id)}")
                 except ValueError:
                     print("Invalid input. Please enter valid numbers.")
 
@@ -49,7 +50,7 @@ def main():
                     thetalist = [int(s) for s in input("Enter joint angles (e.g., 2,30,20,20,30,10): ").split(",")]
                     robot.set_joint_values(thetalist)
                     time.sleep(0.5)
-                    print(f"Joint values: {robot.joint_values}")
+                    print(f"Joint values: {robot.get_joint_values()}")
                 except ValueError:
                     print("Invalid input. Please enter valid numbers.")
 
@@ -77,18 +78,13 @@ def shutdown_robot():
 
     # Stop all motors
     print("[INFO] Stopping all motors...")
-    robot.stop_motors()
+    # robot.stop_motors()
 
     # Move servos to a safe position
     print("[INFO] Resetting servo positions...")
     robot.set_joint_values([0, 0, 90, -30, 0, 0])
 
     time.sleep(1.5)  # Allow servos to reach their position
-
-    # Close communication interfaces
-    print("[INFO] Closing I2C and Serial connections...")
-    robot.board.close()  # Close I2C bus
-    robot.servo_bus.close()  # Ensure the serial port is properly closed
 
     print("\n[INFO] Shutdown complete. Safe to power off.")
 
