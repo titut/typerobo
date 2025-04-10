@@ -238,7 +238,7 @@ class HiwonderRobot:
         rx = sqrt(p_wrist_x**2 + p_wrist_y**2)
         ry = p_wrist_z - self.l1
 
-        theta[2] = acos(
+        theta[2] = -acos(
             (rx**2 + ry**2 - self.l2**2 - self.l3**2) / (2 * self.l2 * self.l3)
         )
         alpha = atan2(self.l2 * sin(theta[2]), self.l2 + self.l3 * cos(theta[2]))
