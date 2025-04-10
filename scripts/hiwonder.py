@@ -223,9 +223,9 @@ class HiwonderRobot:
         rotz = rot
         rot_y = np.array(
             [
-                [cos(np.pi / 2 + rotz), 0, sin(np.pi / 2 + rotz)],
+                [cos(rotz), 0, sin(rotz)],
                 [0, 1, 0],
-                [-sin(np.pi / 2 + rotz), 0, cos(np.pi / 2 + rotz)],
+                [-sin(rotz), 0, cos(rotz)],
             ]
         )
         k = np.transpose(np.array([[0, 0, 1]]))
