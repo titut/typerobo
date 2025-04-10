@@ -219,7 +219,7 @@ class HiwonderRobot:
                 [0, 0, 1],
             ]
         )
-        rotz = radians(rot)
+        rotz = rot
         rot_y = np.array(
             [
                 [cos(np.pi / 2 + rotz), 0, sin(np.pi / 2 + rotz)],
@@ -406,6 +406,14 @@ class HiwonderRobot:
         Move in square motion
         """
         print(f"Moving to square position...")
+        self.set_joint_values(
+            self.calc_analytical_inverse_kinematics(0.1866, 0.1155, 0.3671, 0.5),
+            duration=500,
+        )
+        time.sleep(2.0)
+        print(f"Arrived at home position: {self.joint_values} \n")
+        time.sleep(1.0)
+        print(f"------------------- System is now ready!------------------- \n")
 
     # -------------------------------------------------------------
     # Utility Functions
