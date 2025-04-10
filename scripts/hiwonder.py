@@ -212,6 +212,7 @@ class HiwonderRobot:
         theta = [0, -85.04, -64.58, -69.54, 0, 0]
 
         theta[0] = atan2(y, x)
+        print(theta[0])
         rot_z_theta1 = np.array(
             [
                 [cos(theta[0]), -sin(theta[0]), 0],
