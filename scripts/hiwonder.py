@@ -59,7 +59,6 @@ class HiwonderRobot:
             cmd (GamepadCmds): Command data class with velocities and joint commands.
         """
 
-        print(f"j_1: {cmd.arm_j1}")
         if cmd.arm_home:
             self.move_to_home_position()
         elif cmd.arm_j1:
@@ -255,8 +254,6 @@ class HiwonderRobot:
 
         theta = [degrees(i) for i in theta]
 
-        print(theta)
-
         return theta
 
     def set_arm_velocity(self, cmd: ut.GamepadCmds):
@@ -371,7 +368,6 @@ class HiwonderRobot:
             thetalist = [np.rad2deg(theta) for theta in thetalist]
 
         thetalist = self.enforce_joint_limits(thetalist)
-        print(f"Theta (joint-limit enforced: {thetalist}")
         self.joint_values = thetalist  # updates joint_values with commanded thetalist
         thetalist = self.remap_joints(
             thetalist
@@ -410,28 +406,6 @@ class HiwonderRobot:
         Move in square motion
         """
         print(f"Moving to square position...")
-        self.set_joint_values(
-            self.calc_analytical_inverse_kinematics(0.29, -0.0762, 0.331, -30),
-            duration=500,
-        )
-        time.sleep(5.0)
-        self.set_joint_values(
-            self.calc_analytical_inverse_kinematics(0.29, 0.0762, 0.331, -30),
-            duration=500,
-        )
-        time.sleep(5.0)
-        self.set_joint_values(
-            self.calc_analytical_inverse_kinematics(0.29, 0.0762, 0.179, 30),
-            duration=500,
-        )
-        time.sleep(5.0)
-        self.set_joint_values(
-            self.calc_analytical_inverse_kinematics(0.29, -0.0762, 0.179, 30),
-            duration=500,
-        )
-        time.sleep(5.0)
-        print(f"-------------------Moved to Square!------------------- \n")
-        time.sleep(10.0)
 
     # -------------------------------------------------------------
     # Utility Functions
