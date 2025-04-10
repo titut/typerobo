@@ -67,7 +67,7 @@ class HiwonderRobot:
         # print(f"---------------------------------------------------------------------")
 
         # self.set_base_velocity(cmd)
-        self.set_arm_velocity(cmd)
+        # self.set_arm_velocity(cmd)
 
         ######################################################################
 
