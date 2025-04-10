@@ -408,7 +408,7 @@ class HiwonderRobot:
         """
         print(f"Moving to square position...")
         self.set_joint_values(
-            self.calc_analytical_inverse_kinematics(0.1866, 0.1155, 0.3671, 0.5),
+            self.calc_analytical_inverse_kinematics(0.1866, 0.1155, 0.3671, 1.2012),
             duration=500,
         )
         time.sleep(2.0)
