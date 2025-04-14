@@ -195,7 +195,7 @@ class HiwonderRobot:
     
     def update_joint_values(self):
         """ Updates the joint angle values by calling "get_joint_value" for all joints """
-        res = [self.get_joint_value(i+1) for i in range(len(self.joint_values))]
+        res = [self.update_joint_value(i+1) for i in range(len(self.joint_values))]
         res = self.remap_joints(res)
 
         # check for Nones and replace with the previous value
