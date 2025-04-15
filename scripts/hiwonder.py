@@ -26,6 +26,9 @@ class HiwonderRobot:
         self.board.enable_reception()
         self.bsc = BusServoControl(self.board)
 
+        # lengths of arm
+        self.l1, self.l2, self.l3, self.l4, self.l5 = 0.155, 0.099, 0.095, 0.055, 0.105
+
         self.joint_values = [0, 0, 90, -30, 0, 0]  # degrees
         self.home_position = [0, 0, 90, -30, 0, 0]  # degrees
         self.joint_limits = [
@@ -142,8 +145,104 @@ class HiwonderRobot:
         # set new joint angles
         self.set_joint_values(new_thetalist, radians=False)
 
-    def set_arm_position(self):
-        pass
+    def DH_matrix(self, theta, d, r, alpha):
+        """Calculates DH matrix based on given arguments"""
+        return np.array(
+            [
+                [
+                    cos(theta),
+                    -sin(theta) * cos(alpha),
+                    sin(theta) * sin(alpha),
+                    r * cos(theta),
+                ],
+                [
+                    sin(theta),
+                    cos(theta) * cos(alpha),
+                    -cos(theta) * sin(alpha),
+                    r * sin(theta),
+                ],
+                [0, sin(alpha), cos(alpha), d],
+                [0, 0, 0, 1],
+            ]
+        )
+
+    def calc_DH_matrices(self, theta):
+        """Calculates all DH Matrices of the system"""
+        # DH table parameters
+        theta_i_table = [
+            theta[0],
+            theta[1],
+            theta[2],
+            theta[3],
+            theta[4],
+        ]
+        d_table = [self.l1, 0, 0, 0, self.l5]
+        r_table = [0, self.l2, self.l3, self.l4, 0]
+        alpha_table = [np.pi / 2, np.pi, np.pi, 0, 0]
+        DH = np.zeros(shape=(4, 4, 5))
+        for i in range(5):
+            if i == 0:
+                DH[i] = self.DH_matrix(
+                    theta_i_table[i], d_table[i], r_table[i], alpha_table[i]
+                ) @ self.DH_matrix(np.pi / 2, 0, 0, 0)
+            elif i == 3:
+                DH[i] = self.DH_matrix(
+                    theta_i_table[i], d_table[i], r_table[i], alpha_table[i]
+                ) @ self.DH_matrix(-np.pi / 2, 0, 0, -np.pi / 2)
+            else:
+                DH[i] = self.DH_matrix(
+                    theta_i_table[i], d_table[i], r_table[i], alpha_table[i]
+                )
+        return DH
+
+    def set_arm_position(self, x, y, z, rot):
+        theta = [0, -85.04, -64.58, -69.54, 0, 0]
+
+        theta[0] = atan2(y, x)
+        print(theta[0])
+        rot_z_theta1 = np.array(
+            [
+                [cos(theta[0]), -sin(theta[0]), 0],
+                [sin(theta[0]), cos(theta[0]), 0],
+                [0, 0, 1],
+            ]
+        )
+        rotz = rot
+        rot_y = np.array(
+            [
+                [cos(rotz), 0, sin(rotz)],
+                [0, 1, 0],
+                [-sin(rotz), 0, cos(rotz)],
+            ]
+        )
+        k = np.transpose(np.array([[0, 0, 1]]))
+        r_06 = rot_z_theta1 @ rot_y
+        t_35 = (self.l4 + self.l5) * r_06 @ k
+
+        p_wrist_x = x - t_35[0]
+        p_wrist_y = y - t_35[1]
+        p_wrist_z = z - t_35[2]
+
+        rx = sqrt(p_wrist_x**2 + p_wrist_y**2)
+        ry = p_wrist_z - self.l1
+
+        theta[2] = -acos(
+            (rx**2 + ry**2 - self.l2**2 - self.l3**2) / (2 * self.l2 * self.l3)
+        )
+        alpha = atan2(self.l2 * sin(theta[2]), self.l2 + self.l3 * cos(theta[2]))
+        gamma = atan2(ry, rx)
+        theta[1] = (gamma - alpha) - (np.pi / 2)
+        theta[2] = -theta[2]
+
+        DH = self.calc_DH_matrices(theta)
+        r_03 = (DH[0] @ DH[1] @ DH[2])[:3, :3]
+        r_35 = np.transpose(r_03) @ r_06
+
+        theta[3] = atan2(r_35[0][0], r_35[0][2])
+
+        theta = [degrees(i) for i in theta]
+
+        return theta
 
     def set_joint_value(self, joint_id: int, theta: float, duration=250, radians=False):
         """Moves a single joint to a specified angle"""
