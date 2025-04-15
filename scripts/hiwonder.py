@@ -142,6 +142,9 @@ class HiwonderRobot:
         # set new joint angles
         self.set_joint_values(new_thetalist, radians=False)
 
+    def set_arm_position(self):
+        pass
+
     def set_joint_value(self, joint_id: int, theta: float, duration=250, radians=False):
         """Moves a single joint to a specified angle"""
         if not (1 <= joint_id <= 6):
