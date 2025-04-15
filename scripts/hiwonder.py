@@ -340,9 +340,7 @@ class HiwonderRobot:
         ]
 
     def move_to_home_position(self):
-        self.board.set_buzzer(2400, 0.1, 0.9, 1)
         time.sleep(2)
-
         print(f"Moving to home position...")
         self.set_joint_values(self.home_position, duration=1000)
         time.sleep(2.0)
