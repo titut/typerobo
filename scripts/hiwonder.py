@@ -181,7 +181,7 @@ class HiwonderRobot:
         d_table = [self.l1, 0, 0, 0, self.l5]
         r_table = [0, self.l2, self.l3, self.l4, 0]
         alpha_table = [np.pi / 2, np.pi, np.pi, 0, 0]
-        DH = np.zeros(shape=(4, 4, 5))
+        DH = np.zeros(shape=(5, 4, 4))
         for i in range(5):
             if i == 0:
                 DH[i] = self.DH_matrix(
