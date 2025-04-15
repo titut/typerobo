@@ -59,10 +59,10 @@ class HiwonderRobot:
         if cmd.arm_home:
             self.move_to_home_position()
 
-        print(f"---------------------------------------------------------------------")
+        # print(f"---------------------------------------------------------------------")
 
         # self.set_base_velocity(cmd)
-        self.set_arm_velocity(cmd)
+        # self.set_arm_velocity(cmd)
 
         ######################################################################
 
