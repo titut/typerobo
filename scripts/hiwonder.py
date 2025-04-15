@@ -39,6 +39,13 @@ class HiwonderRobot:
             [-90, 90],
             [-120, 30],
         ]
+        self.theta_limits = [
+            [-np.pi, np.pi],
+            [-np.pi / 3, np.pi],
+            [-np.pi + np.pi / 12, np.pi - np.pi / 4],
+            [-np.pi + np.pi / 12, np.pi - np.pi / 12],
+            [-np.pi, np.pi],
+        ]
         self.joint_control_delay = 0.2  # secs
         self.speed_control_delay = 0.2
         self.time_out = 100
@@ -63,7 +70,6 @@ class HiwonderRobot:
 
         # print(f"---------------------------------------------------------------------")
 
-        # self.set_base_velocity(cmd)
         # self.set_arm_velocity(cmd)
 
         ######################################################################
@@ -77,75 +83,20 @@ class HiwonderRobot:
 
         # print(f'Joint values: {self.get_joint_values()}')
 
-        print(
-            f"[DEBUG] XYZ position: X: {round(position[0], 3)}, Y: {round(position[1], 3)}, Z: {round(position[2], 3)} \n"
-        )
-
-    def set_base_velocity(self, cmd: ut.GamepadCmds):
-        """Computes wheel speeds based on joystick input and sends them to the board"""
+    def solve_forward_kinematics(self, theta):
         """
-        motor3 w0|  ↑  |w1 motor1
-                 |     |
-        motor4 w2|     |w3 motor2
-        
+        Given a list of thetas (in radians) calculate its expected position
+        in xyz coordinates.
         """
-        ######################################################################
-        # insert your code for finding "speed"
+        EE = np.array([0, 0, 0, 1])
 
-        speed = [0] * 4
-
-        ######################################################################
-
-        # Send speeds to motors
-        self.board.set_motor_speed(speed)
-        time.sleep(self.speed_control_delay)
-
-    # -------------------------------------------------------------
-    # Methods for interfacing with the 5-DOF robotic arm
-    # -------------------------------------------------------------
-
-    def set_arm_velocity(self, cmd: ut.GamepadCmds):
-        """Calculates and sets new joint angles from linear velocities.
-
-        Args:
-            cmd (GamepadCmds): Contains linear velocities for the arm.
-        """
-        vel = [cmd.arm_vx, cmd.arm_vy, cmd.arm_vz]
-
-        ######################################################################
-        # insert your code for finding "thetalist_dot"
-
-        thetalist_dot = [0] * 5
-
-        ######################################################################
-
-        print(f"[DEBUG] Current thetalist (deg) = {self.joint_values}")
-        print(
-            f"[DEBUG] linear vel: {[round(vel[0], 3), round(vel[1], 3), round(vel[2], 3)]}"
-        )
-        print(f"[DEBUG] thetadot (deg/s) = {[round(td,2) for td in thetalist_dot]}")
-
-        # Update joint angles
-        dt = 0.5  # Fixed time step
-        K = 1600  # mapping gain for individual joint control
-        new_thetalist = [0.0] * 6
-
-        # linear velocity control
+        DH = self.calc_DH_matrices(theta)
+        T_cumulative = [np.eye(4)]
         for i in range(5):
-            new_thetalist[i] = self.joint_values[i] + dt * thetalist_dot[i]
-        # individual joint control
-        new_thetalist[0] += dt * K * cmd.arm_j1
-        new_thetalist[1] += dt * K * cmd.arm_j2
-        new_thetalist[2] += dt * K * cmd.arm_j3
-        new_thetalist[3] += dt * K * cmd.arm_j4
-        new_thetalist[4] += dt * K * cmd.arm_j5
-        new_thetalist[5] = self.joint_values[5] + dt * K * cmd.arm_ee
+            T_cumulative.append(T_cumulative[-1] @ DH[i])
 
-        new_thetalist = [round(theta, 2) for theta in new_thetalist]
-        print(f"[DEBUG] Commanded thetalist (deg) = {new_thetalist}")
-
-        # set new joint angles
-        self.set_joint_values(new_thetalist, radians=False)
+        EE = T_cumulative[5] @ EE
+        return EE
 
     def DH_matrix(self, theta, d, r, alpha):
         """Calculates DH matrix based on given arguments"""
@@ -197,7 +148,99 @@ class HiwonderRobot:
                 )
         return DH
 
-    def set_arm_position(self, x, y, z, rot):
+    def jacobian(self, theta):
+        """Calculate the Jacobian given a list of thetas"""
+        DH = self.calc_DH_matrices(theta)
+
+        T_cumulative = [np.eye(4)]
+        for i in range(5):
+            T_cumulative.append(T_cumulative[-1] @ DH[i])
+
+        # Define O0 for calculations
+        O0 = np.array([0, 0, 0, 1])
+
+        # Initialize the Jacobian matrix
+        jacobian = np.zeros((3, 5))
+
+        # Calculate the Jacobian columns
+        for i in range(5):
+            T_curr = T_cumulative[i]
+            T_final = T_cumulative[-1]
+
+            # Calculate position vector r
+            r = (T_final @ O0 - T_curr @ O0)[:3]
+
+            # Compute the rotation axis z
+            z = T_curr[:3, :3] @ np.array([0, 0, 1])
+
+            # Compute linear velocity part of the Jacobian
+            jacobian[:, i] = np.cross(z, r)
+
+        return np.where(np.isclose(jacobian, 0, atol=1e-5), 0, jacobian)
+
+    def damped_inverse_jacobian(self, q=None, damping_factor=0.025):
+        J = self.jacobian(q)
+        JT = np.transpose(J)
+        I = np.eye(3)
+        return JT @ np.linalg.inv(J @ JT + (damping_factor**2) * I)
+
+    def set_arm_position(self, EE, tol=1e-3, ilimit=500):
+        """Calculate numerical inverse kinematics based on input coordinates."""
+
+        Te_d = [EE.x, EE.y, EE.z]
+
+        # Iteration count
+        i = 0
+        q = theta = [0, -85.04, -64.58, -69.54, 0]
+
+        while i < ilimit:
+            i += 1
+
+            # compute current EE position based on q
+            Te = self.solve_forward_kinematics(q)
+
+            # calculate the EE position error
+            e = [0, 0, 0]
+            e[0] = Te_d[0] - Te[0]
+            e[1] = Te_d[1] - Te[1]
+            e[2] = Te_d[2] - Te[2]
+
+            # update q
+            q += self.damped_inverse_jacobian(q) @ e
+
+            # check for joint limits
+            for j, th in enumerate(q):
+                q[j] = np.clip(th, self.theta_limits[j][0], self.theta_limits[j][1])
+
+            # Check if we have arrived
+            if abs(max(e, key=abs)) < tol:
+                break
+
+        if abs(max(e, key=abs)) > tol:
+            print(
+                "\n [ERROR] Numerical IK solution failed to converge... \n \
+                  Possible causes: \n \
+                  1. cartesian position is not reachable by the robot, given the joint limits \n \
+                  2. desired joint configuration is very close to OR at a singularity \n \
+                  3. iterative algorithm is stuck at a local minima \n \
+                  4. solver is taking too long to converge  \n"
+            )
+            print(
+                f"Max position error: {max(e, key=abs)} | # iterations: {i}/{ilimit} "
+            )
+            # raise ValueError
+            return False
+
+        theta = [degrees(i) for i in q]
+        theta.append(0)
+
+        print(
+            f"Solution found = {theta} | Max pos error = {max(e, key=abs)} | # iterations: {i}/{ilimit}  \n"
+        )
+
+        return theta
+
+    def set_arm_position_analytical(self, x, y, z, rot):
         theta = [0, -85.04, -64.58, -69.54, 0, 0]
 
         theta[0] = atan2(y, x)
@@ -354,7 +397,7 @@ class HiwonderRobot:
         """
         print(f"Moving to position 1...")
         self.set_joint_values(
-            self.set_arm_position(0.1866, 0.1155, 0.3671, 1.2012),
+            self.set_arm_position(0.1866, 0.1155, 0.3671),
             duration=500,
         )
         time.sleep(2.0)
