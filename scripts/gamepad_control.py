@@ -89,21 +89,9 @@ class GamepadControl:
             )
 
         gamepad_cmds.arm_j1 = int(self.ARM_J1_FLAG)
-        gamepad_cmds.arm_j2 = (
-            self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1])
-            if self.ARM_J2_FLAG
-            else 0.0
-        )
-        gamepad_cmds.arm_j3 = (
-            self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1])
-            if self.ARM_J3_FLAG
-            else 0.0
-        )
-        gamepad_cmds.arm_j4 = (
-            self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1])
-            if self.ARM_J4_FLAG
-            else 0.0
-        )
+        gamepad_cmds.arm_j2 = int(self.ARM_J2_FLAG)
+        gamepad_cmds.arm_j3 = int(self.ARM_J3_FLAG)
+        gamepad_cmds.arm_j4 = int(self.ARM_J4_FLAG)
         gamepad_cmds.arm_j5 = (
             self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1])
             if self.ARM_J5_FLAG
