@@ -67,6 +67,11 @@ class HiwonderRobot:
             self.move_to_home_position()
         elif cmd.arm_j1:
             self.move_to_position_1()
+        elif cmd.arm_j2:
+            self.move_to_position_2()
+
+        a = input("Enter a value for joint 2: ")
+        self.set_joint_values([0, 0, a, 0, 0, 0], duration=1000)
 
         # print(f"---------------------------------------------------------------------")
 
@@ -398,6 +403,20 @@ class HiwonderRobot:
         print(f"Moving to position 1...")
         self.set_joint_values(
             self.set_arm_position(0.1866, 0.1155, 0.3671),
+            duration=1000,
+        )
+        time.sleep(2.0)
+        print(f"Arrived at position 1: {self.joint_values} \n")
+        time.sleep(1.0)
+        print(f"------------------- System is now ready!------------------- \n")
+
+    def move_to_position_2(self):
+        """
+        Move in square motion
+        """
+        print(f"Moving to position 1...")
+        self.set_joint_values(
+            self.set_arm_position(0.1866, -0.1155, 0.3671),
             duration=1000,
         )
         time.sleep(2.0)
