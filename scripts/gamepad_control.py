@@ -88,11 +88,7 @@ class GamepadControl:
                 self.abs_z, [32767, -32767], [-0.1, 0.1]
             )
 
-        gamepad_cmds.arm_j1 = (
-            self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1])
-            if self.ARM_J1_FLAG
-            else 0.0
-        )
+        gamepad_cmds.arm_j1 = int(self.ARM_J1_FLAG)
         gamepad_cmds.arm_j2 = (
             self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1])
             if self.ARM_J2_FLAG
@@ -133,10 +129,10 @@ class GamepadControl:
             # 'BTN_TL': ('MOBILE_BASE_FLAG', bool(event.state)),
             "BTN_TL": ("UTILITY_BTN", bool(event.state)),
             "BTN_TR": ("ARM_FLAG", bool(event.state)),
-            "BTN_WEST": ("ARM_J1_FLAG", bool(event.state)),
+            "BTN_NORTH": ("ARM_J1_FLAG", bool(event.state)),
             "BTN_EAST": ("ARM_J2_FLAG", bool(event.state)),
             "BTN_SOUTH": ("ARM_J3_FLAG", bool(event.state)),
-            "BTN_NORTH": ("ARM_J4_FLAG", bool(event.state)),
+            "ABCDEFG": ("ARM_J4_FLAG", bool(event.state)),
             "ABS_RZ": ("ARM_J5_FLAG", bool(event.state)),
             "ABS_Z": ("ARM_EE_FLAG", bool(event.state)),
             "BTN_SELECT": ("ARM_HOME", bool(event.state)),
