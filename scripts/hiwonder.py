@@ -184,10 +184,10 @@ class HiwonderRobot:
         I = np.eye(3)
         return JT @ np.linalg.inv(J @ JT + (damping_factor**2) * I)
 
-    def set_arm_position(self, EE, tol=1e-3, ilimit=500):
+    def set_arm_position(self, x, y, z, tol=1e-3, ilimit=500):
         """Calculate numerical inverse kinematics based on input coordinates."""
 
-        Te_d = [EE.x, EE.y, EE.z]
+        Te_d = [x, y, z]
 
         # Iteration count
         i = 0
