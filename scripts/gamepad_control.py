@@ -31,6 +31,7 @@ class GamepadControl:
         self.ARM_J5_FLAG = False
         self.ARM_EE_FLAG = False
         self.ARM_HOME = False
+        self.UTILITY_BTN = False
 
     def initialize_gamepad(self):
         """Attempts to initialize the first connected gamepad."""
@@ -63,7 +64,7 @@ class GamepadControl:
             if event.ev_type != "Sync":
                 self._handle_event(event)
 
-                print(f"type: {event.code}, state: {event.state}")
+                # print(f'type: {event.code}, state: {event.state}')
 
         if self.MOBILE_BASE_FLAG:
             gamepad_cmds.base_vx = self.map_value(
@@ -87,7 +88,11 @@ class GamepadControl:
                 self.abs_z, [32767, -32767], [-0.1, 0.1]
             )
 
-        gamepad_cmds.arm_j1 = 1.0 if self.ARM_J1_FLAG else 0.0
+        gamepad_cmds.arm_j1 = (
+            self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1])
+            if self.ARM_J1_FLAG
+            else 0.0
+        )
         gamepad_cmds.arm_j2 = (
             self.map_value(self.abs_x, [-32767, 32767], [-0.1, 0.1])
             if self.ARM_J2_FLAG
@@ -114,6 +119,7 @@ class GamepadControl:
             else 0.0
         )
         gamepad_cmds.arm_home = int(self.ARM_HOME)
+        gamepad_cmds.utility_btn = int(self.UTILITY_BTN)
 
         self.gamepad_cmds_prev = gamepad_cmds
         return gamepad_cmds
@@ -124,12 +130,13 @@ class GamepadControl:
             "ABS_X": ("abs_x", event.state),
             "ABS_Y": ("abs_y", event.state),
             "ABS_RY": ("abs_z", event.state),
-            "BTN_TL": ("MOBILE_BASE_FLAG", bool(event.state)),
-            "BTN_BASE2": ("ARM_FLAG", bool(event.state)),
-            "BTN_NORTH": ("ARM_J1_FLAG", bool(event.state)),
-            "BTN_THUMB2": ("ARM_J2_FLAG", bool(event.state)),
-            "BTN_THUMB": ("ARM_J3_FLAG", bool(event.state)),
-            "BTN_TOP": ("ARM_J4_FLAG", bool(event.state)),
+            # 'BTN_TL': ('MOBILE_BASE_FLAG', bool(event.state)),
+            "BTN_TL": ("UTILITY_BTN", bool(event.state)),
+            "BTN_TR": ("ARM_FLAG", bool(event.state)),
+            "BTN_WEST": ("ARM_J1_FLAG", bool(event.state)),
+            "BTN_EAST": ("ARM_J2_FLAG", bool(event.state)),
+            "BTN_SOUTH": ("ARM_J3_FLAG", bool(event.state)),
+            "BTN_NORTH": ("ARM_J4_FLAG", bool(event.state)),
             "ABS_RZ": ("ARM_J5_FLAG", bool(event.state)),
             "ABS_Z": ("ARM_EE_FLAG", bool(event.state)),
             "BTN_SELECT": ("ARM_HOME", bool(event.state)),
