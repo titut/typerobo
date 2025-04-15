@@ -71,7 +71,9 @@ class HiwonderRobot:
             self.move_to_position_2()
 
         a = input("Enter a value for joint 2: ")
-        self.set_joint_values([0, 0, a, 0, 0, 0], duration=1000)
+        self.set_joint_values([0, 0, int(a), 0, 0, 0], duration=1000)
+
+        print("HELLO")
 
         # print(f"---------------------------------------------------------------------")
 
