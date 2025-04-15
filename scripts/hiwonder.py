@@ -325,10 +325,10 @@ class HiwonderRobot:
             thetalist = [np.rad2deg(theta) for theta in thetalist]
 
         thetalist = self.enforce_joint_limits(thetalist)
-        # self.joint_values = thetalist # updates joint_values with commanded thetalist
         thetalist = self.remap_joints(
             thetalist
         )  # remap the joint values from software to hardware
+        self.joint_values = thetalist  # updates joint_values with commanded thetalist
 
         positions = []
         for joint_id, theta in enumerate(thetalist, start=1):
@@ -398,7 +398,7 @@ class HiwonderRobot:
         print(f"Moving to position 1...")
         self.set_joint_values(
             self.set_arm_position(0.1866, 0.1155, 0.3671),
-            duration=500,
+            duration=1000,
         )
         time.sleep(2.0)
         print(f"Arrived at position 1: {self.joint_values} \n")
