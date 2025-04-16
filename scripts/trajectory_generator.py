@@ -265,3 +265,5 @@ class TrapezoidVelocity():
     
     def __init__(self, trajgen):
         pass
+
+
