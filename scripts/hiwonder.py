@@ -74,8 +74,13 @@ class HiwonderRobot:
         test_x = input("x: ")
         test_y = input("y: ")
         test_z = input("z: ")
-        test_pos = self.set_arm_position(float(test_x), float(test_y), float(test_z))
-        self.set_joint_values(test_pos, duration=1000)
+        if test_z == "home":
+            self.move_to_home_position()
+        else:
+            test_pos = self.set_arm_position(
+                float(test_x), float(test_y), float(test_z)
+            )
+            self.set_joint_values(test_pos, duration=1000)
 
         print()
         print()
