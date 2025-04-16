@@ -30,6 +30,7 @@ class HiwonderRobot:
         self.l1, self.l2, self.l3, self.l4, self.l5 = 0.155, 0.099, 0.095, 0.055, 0.105
 
         self.joint_values = [0, 0, 90, -30, 0, 0]  # degrees
+        self.test_position = [0, 0, 90, 0, 0, 0]
         self.home_position = [0, 0, 90, -30, 0, 0]  # degrees
         self.joint_limits = [
             [-120, 120],
@@ -70,10 +71,13 @@ class HiwonderRobot:
         elif cmd.arm_j2:
             self.move_to_position_2()
 
-        a = input("Enter a value for joint 2: ")
-        self.set_joint_values([0, 0, int(a), 0, 0, 0], duration=1000)
+        joint_number = input("Joint: ")
+        joint_value = input("Value: ")
+        self.test_position[int(joint_number)] = int(joint_value)
+        self.set_joint_values(self.test_position, duration=1000)
 
-        print("HELLO")
+        print()
+        print()
 
         # print(f"---------------------------------------------------------------------")
 
