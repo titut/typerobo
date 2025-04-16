@@ -71,10 +71,11 @@ class HiwonderRobot:
         elif cmd.arm_j2:
             self.move_to_position_2()
 
-        joint_number = input("Joint: ")
-        joint_value = input("Value: ")
-        self.test_position[int(joint_number)] = int(joint_value)
-        self.set_joint_values(self.test_position, duration=1000)
+        test_x = input("x: ")
+        test_y = input("y: ")
+        test_z = input("z: ")
+        test_pos = self.set_arm_position(test_x, test_y, test_z)
+        self.set_joint_values(test_pos, duration=1000)
 
         print()
         print()
@@ -242,7 +243,7 @@ class HiwonderRobot:
             # raise ValueError
             return False
 
-        theta = [degrees(i) for i in q]
+        theta = [11 * degrees(i) / 9 for i in q]
         theta.append(0)
 
         print(
