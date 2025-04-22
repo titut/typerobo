@@ -235,6 +235,7 @@ class HiwonderRobot:
         # Iteration count
         i = 0
         q = [radians(i) for i in self.joint_values]
+        q = q[:-1]
 
         while i < ilimit:
             i += 1
