@@ -103,13 +103,8 @@ class HiwonderRobot:
         if test_z == "home":
             self.move_to_home_position()
         else:
-            self.test_pos = self.set_arm_position(
-                float(test_x), float(test_y), float(test_z)
-            )
-            self.set_joint_values(self.test_pos, duration=1000)
-
-        print()
-        print()
+            self.test_pos = [test_x,test_y,test_z]
+            self.generate_traj_task_space()
 
         # print(f"---------------------------------------------------------------------")
 
@@ -122,7 +117,7 @@ class HiwonderRobot:
         ######################################################################
 
         # update joint values
-        self.generate_traj_task_space()
+        self.update_joint_value()
 
         # print(f'Joint values: {self.get_joint_values()}')
 
@@ -331,7 +326,7 @@ class HiwonderRobot:
 
         theta = [degrees(i) for i in theta]
 
-        return theta
+        self.set_joint_values(theta)
 
     def set_joint_value(self, joint_id: int, theta: float, duration=250, radians=False):
         """Moves a single joint to a specified angle"""
