@@ -109,8 +109,8 @@ class HiwonderRobot:
 
         DH = self.calc_DH_matrices(theta)
         T_cumulative = [np.eye(4)]
-        for i in range(5):
-            T_cumulative.append(T_cumulative[-1] @ DH[i])
+        for fk_i in range(5):
+            T_cumulative.append(T_cumulative[-1] @ DH[fk_i])
 
         EE = T_cumulative[5] @ EE
         return EE
@@ -150,18 +150,18 @@ class HiwonderRobot:
         r_table = [0, self.l2, self.l3, self.l4, 0]
         alpha_table = [np.pi / 2, np.pi, np.pi, 0, 0]
         DH = np.zeros(shape=(5, 4, 4))
-        for i in range(5):
-            if i == 0:
-                DH[i] = self.DH_matrix(
-                    theta_i_table[i], d_table[i], r_table[i], alpha_table[i]
+        for dh_i in range(5):
+            if dh_i == 0:
+                DH[dh_i] = self.DH_matrix(
+                    theta_i_table[dh_i], d_table[dh_i], r_table[dh_i], alpha_table[dh_i]
                 ) @ self.DH_matrix(np.pi / 2, 0, 0, 0)
-            elif i == 3:
-                DH[i] = self.DH_matrix(
-                    theta_i_table[i], d_table[i], r_table[i], alpha_table[i]
+            elif dh_i == 3:
+                DH[dh_i] = self.DH_matrix(
+                    theta_i_table[dh_i], d_table[dh_i], r_table[dh_i], alpha_table[dh_i]
                 ) @ self.DH_matrix(-np.pi / 2, 0, 0, -np.pi / 2)
             else:
-                DH[i] = self.DH_matrix(
-                    theta_i_table[i], d_table[i], r_table[i], alpha_table[i]
+                DH[dh_i] = self.DH_matrix(
+                    theta_i_table[dh_i], d_table[dh_i], r_table[dh_i], alpha_table[dh_i]
                 )
         return DH
 
@@ -208,7 +208,7 @@ class HiwonderRobot:
 
         # Iteration count
         i = 0
-        q = theta = [0, -85.04, -64.58, -69.54, 0]
+        q = [radians(i) for i in self.joint_values]
 
         while i < ilimit:
             i += 1
