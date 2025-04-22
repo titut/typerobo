@@ -7,9 +7,12 @@ Handles the control of the mobile base and 5-DOF robotic arm using commands rece
 
 import time
 from math import sin, cos, atan2, radians, degrees, sqrt, acos
+import math
+from utils import wraptopi, EndEffector
 import numpy as np
 from ros_robot_controller_sdk import Board
 from bus_servo_control import *
+from trajectory_generator import MultiAxisTrajectoryGenerator
 
 import utils as ut
 
@@ -53,6 +56,29 @@ class HiwonderRobot:
 
         self.move_to_home_position()
 
+    
+    def generate_traj_task_space(self):
+        
+        """
+        Generates and visualizes a task-space trajectory using a polynomial interpolator between waypoints.
+        """
+    
+        print('Following trajectory in task space...')
+    
+        q0 = self.solve_forward_kinematics(radians(self.joint_values))[0,0:2]
+        qf = self.test_pos
+
+        traj = MultiAxisTrajectoryGenerator(method="cubic", mode="task", interval=[0, 1], ndof=len(q0), start_pos=q0, final_pos=qf)
+        traj_dofs = traj.generate(nsteps=50)
+
+        for i in range(50):
+            pos = [dof[0][i] for dof in traj_dofs]
+            ee = EndEffector(*pos, 0, -math.pi/2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi))
+            self.set_arm_position(ee[0], ee[1], ee[2])
+            time.sleep(0.05)
+
+    
+    
     # -------------------------------------------------------------
     # Methods for interfacing with the mobile base
     # -------------------------------------------------------------
@@ -77,7 +103,7 @@ class HiwonderRobot:
         if test_z == "home":
             self.move_to_home_position()
         else:
-            test_pos = self.set_arm_position(
+            self.test_pos = self.set_arm_position(
                 float(test_x), float(test_y), float(test_z)
             )
             self.set_joint_values(test_pos, duration=1000)
@@ -96,7 +122,7 @@ class HiwonderRobot:
         ######################################################################
 
         # update joint values
-        self.update_joint_values()
+        self.generate_traj_task_space()
 
         # print(f'Joint values: {self.get_joint_values()}')
 
