@@ -7,9 +7,12 @@ Handles the control of the mobile base and 5-DOF robotic arm using commands rece
 
 import time
 from math import sin, cos, atan2, radians, degrees, sqrt, acos
+import math
+from utils import wraptopi, EndEffector
 import numpy as np
 from ros_robot_controller_sdk import Board
 from bus_servo_control import *
+from trajectory_generator import MultiAxisTrajectoryGenerator
 
 import utils as ut
 
@@ -53,6 +56,29 @@ class HiwonderRobot:
 
         self.move_to_home_position()
 
+    
+    def generate_traj_task_space(self):
+        
+        """
+        Generates and visualizes a task-space trajectory using a polynomial interpolator between waypoints.
+        """
+    
+        print('Following trajectory in task space...')
+    
+        q0 = self.solve_forward_kinematics(radians(self.joint_values))[0,0:2]
+        qf = self.test_pos
+
+        traj = MultiAxisTrajectoryGenerator(method="cubic", mode="task", interval=[0, 1], ndof=len(q0), start_pos=q0, final_pos=qf)
+        traj_dofs = traj.generate(nsteps=50)
+
+        for i in range(50):
+            pos = [dof[0][i] for dof in traj_dofs]
+            ee = EndEffector(*pos, 0, -math.pi/2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi))
+            self.set_arm_position(ee[0], ee[1], ee[2])
+            time.sleep(0.05)
+
+    
+    
     # -------------------------------------------------------------
     # Methods for interfacing with the mobile base
     # -------------------------------------------------------------
@@ -77,13 +103,8 @@ class HiwonderRobot:
         if test_z == "home":
             self.move_to_home_position()
         else:
-            test_pos = self.set_arm_position(
-                float(test_x), float(test_y), float(test_z)
-            )
-            self.set_joint_values(test_pos, duration=1000)
-
-        print()
-        print()
+            self.test_pos = [test_x,test_y,test_z]
+            self.generate_traj_task_space()
 
         # print(f"---------------------------------------------------------------------")
 
@@ -96,7 +117,7 @@ class HiwonderRobot:
         ######################################################################
 
         # update joint values
-        self.update_joint_values()
+        self.update_joint_value()
 
         # print(f'Joint values: {self.get_joint_values()}')
 
@@ -109,8 +130,8 @@ class HiwonderRobot:
 
         DH = self.calc_DH_matrices(theta)
         T_cumulative = [np.eye(4)]
-        for i in range(5):
-            T_cumulative.append(T_cumulative[-1] @ DH[i])
+        for fk_i in range(5):
+            T_cumulative.append(T_cumulative[-1] @ DH[fk_i])
 
         EE = T_cumulative[5] @ EE
         return EE
@@ -150,18 +171,18 @@ class HiwonderRobot:
         r_table = [0, self.l2, self.l3, self.l4, 0]
         alpha_table = [np.pi / 2, np.pi, np.pi, 0, 0]
         DH = np.zeros(shape=(5, 4, 4))
-        for i in range(5):
-            if i == 0:
-                DH[i] = self.DH_matrix(
-                    theta_i_table[i], d_table[i], r_table[i], alpha_table[i]
+        for dh_i in range(5):
+            if dh_i == 0:
+                DH[dh_i] = self.DH_matrix(
+                    theta_i_table[dh_i], d_table[dh_i], r_table[dh_i], alpha_table[dh_i]
                 ) @ self.DH_matrix(np.pi / 2, 0, 0, 0)
-            elif i == 3:
-                DH[i] = self.DH_matrix(
-                    theta_i_table[i], d_table[i], r_table[i], alpha_table[i]
+            elif dh_i == 3:
+                DH[dh_i] = self.DH_matrix(
+                    theta_i_table[dh_i], d_table[dh_i], r_table[dh_i], alpha_table[dh_i]
                 ) @ self.DH_matrix(-np.pi / 2, 0, 0, -np.pi / 2)
             else:
-                DH[i] = self.DH_matrix(
-                    theta_i_table[i], d_table[i], r_table[i], alpha_table[i]
+                DH[dh_i] = self.DH_matrix(
+                    theta_i_table[dh_i], d_table[dh_i], r_table[dh_i], alpha_table[dh_i]
                 )
         return DH
 
@@ -208,7 +229,8 @@ class HiwonderRobot:
 
         # Iteration count
         i = 0
-        q = theta = [0, -85.04, -64.58, -69.54, 0]
+        q = [radians(i) for i in self.joint_values]
+        q = q[:-1]
 
         while i < ilimit:
             i += 1
@@ -304,7 +326,7 @@ class HiwonderRobot:
 
         theta = [degrees(i) for i in theta]
 
-        return theta
+        self.set_joint_values(theta)
 
     def set_joint_value(self, joint_id: int, theta: float, duration=250, radians=False):
         """Moves a single joint to a specified angle"""
