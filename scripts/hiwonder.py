@@ -64,8 +64,8 @@ class HiwonderRobot:
         """
     
         print('Following trajectory in task space...')
-    
-        q0 = self.solve_forward_kinematics(radians(self.joint_values))[0,0:2]
+        q = [radians(i) for i in self.joint_values]
+        q0 = self.solve_forward_kinematics(q[0,0:2])
         qf = self.test_pos
 
         traj = MultiAxisTrajectoryGenerator(method="cubic", mode="task", interval=[0, 1], ndof=len(q0), start_pos=q0, final_pos=qf)
