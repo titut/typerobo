@@ -106,7 +106,7 @@ class HiwonderRobot:
             self.test_pos = self.set_arm_position(
                 float(test_x), float(test_y), float(test_z)
             )
-            self.set_joint_values(test_pos, duration=1000)
+            self.set_joint_values(self.test_pos, duration=1000)
 
         print()
         print()
