@@ -113,8 +113,11 @@ class HiwonderRobot:
         if test_z == "home":
             self.move_to_home_position()
         else:
-            self.test_pos = [test_x, test_y, test_z]
-            self.generate_traj_task_space()
+            # self.test_pos = [test_x, test_y, test_z]
+            # self.generate_traj_task_space()
+            self.set_arm_position_analytical(
+                float(test_x), float(test_y), float(test_z)
+            )
 
         # print(f"---------------------------------------------------------------------")
 
@@ -289,7 +292,7 @@ class HiwonderRobot:
 
         return theta
 
-    def set_arm_position_analytical(self, x, y, z, rot):
+    def set_arm_position_analytical(self, x, y, z):
 
         for i in range(0, 3.14, 0.01):
             try:
