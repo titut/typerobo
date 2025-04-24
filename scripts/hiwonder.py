@@ -31,6 +31,7 @@ class HiwonderRobot:
 
         # lengths of arm
         self.l1, self.l2, self.l3, self.l4, self.l5 = 0.155, 0.099, 0.095, 0.055, 0.105
+        self.cam_offset = 0.045
 
         self.joint_values = [0, 0, 90, -30, 0, 0]  # degrees
         self.test_position = [0, 0, 90, 0, 0, 0]
@@ -54,23 +55,34 @@ class HiwonderRobot:
         self.speed_control_delay = 0.2
         self.time_out = 100
 
+        self.cam_DH = self.DH_matrix(np.pi, 0, self.cam_offset, 0) @ self.DH_matrix(
+            np.pi / 2, 0, 0, 0
+        )
+
         self.move_to_home_position()
 
-    
     def generate_traj_task_space(self):
-        
         """
         Generates and visualizes a task-space trajectory using a polynomial interpolator between waypoints.
         """
-    
-        print('Following trajectory in task space...')
+
+        print("Following trajectory in task space...")
         q = [radians(i) for i in self.joint_values]
+
         print(q)
         q0 = self.solve_forward_kinematics(q)[0:3]
         print(q0)
+
         qf = self.test_pos
 
-        traj = MultiAxisTrajectoryGenerator(method="cubic", mode="task", interval=[0, 1], ndof=len(q0), start_pos=q0, final_pos=qf)
+        traj = MultiAxisTrajectoryGenerator(
+            method="cubic",
+            mode="task",
+            interval=[0, 1],
+            ndof=len(q0),
+            start_pos=q0,
+            final_pos=qf,
+        )
         traj_dofs = traj.generate(nsteps=50)
 
         for i in range(50):
@@ -85,8 +97,6 @@ class HiwonderRobot:
             self.set_arm_position(ee.x, ee.y, ee.z)
             time.sleep(0.05)
 
-    
-    
     # -------------------------------------------------------------
     # Methods for interfacing with the mobile base
     # -------------------------------------------------------------
@@ -111,7 +121,7 @@ class HiwonderRobot:
         if test_z == "home":
             self.move_to_home_position()
         else:
-            self.test_pos = [test_x,test_y,test_z]
+            self.test_pos = [test_x, test_y, test_z]
             self.generate_traj_task_space()
 
         # print(f"---------------------------------------------------------------------")
@@ -278,7 +288,7 @@ class HiwonderRobot:
             # raise ValueError
             return False
 
-        theta = [11 * degrees(i) / 9 for i in q]
+        theta = [degrees(i) for i in q]
         theta.append(0)
 
         print(
@@ -292,6 +302,7 @@ class HiwonderRobot:
         self.set_joint_values(theta, 50)
 
     def set_arm_position_analytical(self, x, y, z, rot):
+
         theta = [0, -85.04, -64.58, -69.54, 0, 0]
 
         theta[0] = atan2(y, x)
@@ -340,6 +351,23 @@ class HiwonderRobot:
         print(theta)
         self.set_joint_values(theta)
 
+    def pose_cam2world_frame(self, x, y, z):
+        """
+        Given x, y, and z in the camera frame, return the respective pose
+        in the world frame
+        """
+        theta = [radians(i) for i in self.joint_values]
+        DH = self.calc_DH_matrices(theta)
+
+        T_cumulative = [np.eye(4)]
+        for i in range(5):
+            T_cumulative.append(T_cumulative[-1] @ DH[i])
+
+        pose_cam_frame = np.array([x, y, z, 1])
+        pose_world_frame = T_cumulative[4] @ self.cam_DH @ pose_cam_frame
+
+        return pose_world_frame[:3]
+
     def set_joint_value(self, joint_id: int, theta: float, duration=250, radians=False):
         """Moves a single joint to a specified angle"""
         if not (1 <= joint_id <= 6):
@@ -373,7 +401,7 @@ class HiwonderRobot:
             raise ValueError("Provide 6 joint angles.")
 
         if radians:
-            thetalist = [np.rad2deg(theta) for theta in thetalist]
+            thetalist = [11 * np.rad2deg(theta) / 9 for theta in thetalist]
 
         thetalist = self.enforce_joint_limits(thetalist)
         self.joint_values = thetalist  # updates joint_values with commanded thetalist
