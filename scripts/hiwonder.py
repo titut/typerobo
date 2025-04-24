@@ -65,7 +65,9 @@ class HiwonderRobot:
     
         print('Following trajectory in task space...')
         q = [radians(i) for i in self.joint_values]
-        q0 = self.solve_forward_kinematics(q[0,0:2])
+        print(q)
+        q0 = self.solve_forward_kinematics(q)[0:3]
+        print(q0)
         qf = self.test_pos
 
         traj = MultiAxisTrajectoryGenerator(method="cubic", mode="task", interval=[0, 1], ndof=len(q0), start_pos=q0, final_pos=qf)
@@ -74,7 +76,13 @@ class HiwonderRobot:
         for i in range(50):
             pos = [dof[0][i] for dof in traj_dofs]
             ee = EndEffector(*pos, 0, -math.pi/2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi))
-            self.set_arm_position(ee[0], ee[1], ee[2])
+            print(ee)
+            # q = [radians(i) for i in self.joint_values]
+            # print("Current Pos:")
+            # print(self.solve_forward_kinematics(q)[0:3])
+            print("Current Pos:")
+            print(self.joint_values)            
+            self.set_arm_position(ee.x, ee.y, ee.z)
             time.sleep(0.05)
 
     
@@ -112,12 +120,12 @@ class HiwonderRobot:
 
         ######################################################################
 
-        position = [0] * 3
+        #position = [0] * 3
 
         ######################################################################
 
         # update joint values
-        self.update_joint_value()
+        #self.update_joint_value()
 
         # print(f'Joint values: {self.get_joint_values()}')
 
@@ -277,7 +285,11 @@ class HiwonderRobot:
             f"Solution found = {theta} | Max pos error = {max(e, key=abs)} | # iterations: {i}/{ilimit}  \n"
         )
 
-        return theta
+        # q = [radians(i) for i in theta]
+        print("Target Pos:")
+        # print(self.solve_forward_kinematics(q)[0:3])
+        print(theta)
+        self.set_joint_values(theta, 50)
 
     def set_arm_position_analytical(self, x, y, z, rot):
         theta = [0, -85.04, -64.58, -69.54, 0, 0]
@@ -325,7 +337,7 @@ class HiwonderRobot:
         theta[3] = atan2(r_35[0][0], r_35[0][2])
 
         theta = [degrees(i) for i in theta]
-
+        print(theta)
         self.set_joint_values(theta)
 
     def set_joint_value(self, joint_id: int, theta: float, duration=250, radians=False):
@@ -368,6 +380,8 @@ class HiwonderRobot:
         thetalist = self.remap_joints(
             thetalist
         )  # remap the joint values from software to hardware
+
+        print(f"{self.joint_values=}")
 
         positions = []
         for joint_id, theta in enumerate(thetalist, start=1):
