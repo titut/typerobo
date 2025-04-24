@@ -291,53 +291,59 @@ class HiwonderRobot:
 
     def set_arm_position_analytical(self, x, y, z, rot):
 
-        theta = [0, -85.04, -64.58, -69.54, 0, 0]
+        for i in range(0, 3.14, 0.01):
+            try:
+                theta = [0, -85.04, -64.58, -69.54, 0, 0]
 
-        theta[0] = atan2(y, x)
-        print(theta[0])
-        rot_z_theta1 = np.array(
-            [
-                [cos(theta[0]), -sin(theta[0]), 0],
-                [sin(theta[0]), cos(theta[0]), 0],
-                [0, 0, 1],
-            ]
-        )
-        rotz = rot
-        rot_y = np.array(
-            [
-                [cos(rotz), 0, sin(rotz)],
-                [0, 1, 0],
-                [-sin(rotz), 0, cos(rotz)],
-            ]
-        )
-        k = np.transpose(np.array([[0, 0, 1]]))
-        r_06 = rot_z_theta1 @ rot_y
-        t_35 = (self.l4 + self.l5) * r_06 @ k
+                theta[0] = atan2(y, x)
+                print(theta[0])
+                rot_z_theta1 = np.array(
+                    [
+                        [cos(theta[0]), -sin(theta[0]), 0],
+                        [sin(theta[0]), cos(theta[0]), 0],
+                        [0, 0, 1],
+                    ]
+                )
+                rotz = i
+                rot_y = np.array(
+                    [
+                        [cos(rotz), 0, sin(rotz)],
+                        [0, 1, 0],
+                        [-sin(rotz), 0, cos(rotz)],
+                    ]
+                )
+                k = np.transpose(np.array([[0, 0, 1]]))
+                r_06 = rot_z_theta1 @ rot_y
+                t_35 = (self.l4 + self.l5) * r_06 @ k
 
-        p_wrist_x = x - t_35[0]
-        p_wrist_y = y - t_35[1]
-        p_wrist_z = z - t_35[2]
+                p_wrist_x = x - t_35[0]
+                p_wrist_y = y - t_35[1]
+                p_wrist_z = z - t_35[2]
 
-        rx = sqrt(p_wrist_x**2 + p_wrist_y**2)
-        ry = p_wrist_z - self.l1
+                rx = sqrt(p_wrist_x**2 + p_wrist_y**2)
+                ry = p_wrist_z - self.l1
 
-        theta[2] = -acos(
-            (rx**2 + ry**2 - self.l2**2 - self.l3**2) / (2 * self.l2 * self.l3)
-        )
-        alpha = atan2(self.l2 * sin(theta[2]), self.l2 + self.l3 * cos(theta[2]))
-        gamma = atan2(ry, rx)
-        theta[1] = (gamma - alpha) - (np.pi / 2)
-        theta[2] = -theta[2]
+                theta[2] = -acos(
+                    (rx**2 + ry**2 - self.l2**2 - self.l3**2) / (2 * self.l2 * self.l3)
+                )
+                alpha = atan2(
+                    self.l2 * sin(theta[2]), self.l2 + self.l3 * cos(theta[2])
+                )
+                gamma = atan2(ry, rx)
+                theta[1] = (gamma - alpha) - (np.pi / 2)
+                theta[2] = -theta[2]
 
-        DH = self.calc_DH_matrices(theta)
-        r_03 = (DH[0] @ DH[1] @ DH[2])[:3, :3]
-        r_35 = np.transpose(r_03) @ r_06
+                DH = self.calc_DH_matrices(theta)
+                r_03 = (DH[0] @ DH[1] @ DH[2])[:3, :3]
+                r_35 = np.transpose(r_03) @ r_06
 
-        theta[3] = atan2(r_35[0][0], r_35[0][2])
+                theta[3] = atan2(r_35[0][0], r_35[0][2])
 
-        theta = [degrees(i) for i in theta]
-
-        self.set_joint_values(theta)
+                theta = [degrees(i) for i in theta]
+                self.set_joint_values(theta)
+                break
+            except:
+                pass
 
     def pose_cam2world_frame(self, x, y, z):
         """
