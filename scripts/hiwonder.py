@@ -61,29 +61,34 @@ class HiwonderRobot:
 
         self.move_to_home_position()
 
-    
     def generate_traj_task_space(self):
-        
         """
         Generates and visualizes a task-space trajectory using a polynomial interpolator between waypoints.
         """
-    
-        print('Following trajectory in task space...')
+
+        print("Following trajectory in task space...")
         q = [radians(i) for i in self.joint_values]
-        q0 = self.solve_forward_kinematics(q[0,0:2])
+        q0 = self.solve_forward_kinematics(q[0, 0:2])
         qf = self.test_pos
 
-        traj = MultiAxisTrajectoryGenerator(method="cubic", mode="task", interval=[0, 1], ndof=len(q0), start_pos=q0, final_pos=qf)
+        traj = MultiAxisTrajectoryGenerator(
+            method="cubic",
+            mode="task",
+            interval=[0, 1],
+            ndof=len(q0),
+            start_pos=q0,
+            final_pos=qf,
+        )
         traj_dofs = traj.generate(nsteps=50)
 
         for i in range(50):
             pos = [dof[0][i] for dof in traj_dofs]
-            ee = EndEffector(*pos, 0, -math.pi/2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi))
+            ee = EndEffector(
+                *pos, 0, -math.pi / 2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi)
+            )
             self.set_arm_position(ee[0], ee[1], ee[2])
             time.sleep(0.05)
 
-    
-    
     # -------------------------------------------------------------
     # Methods for interfacing with the mobile base
     # -------------------------------------------------------------
@@ -108,7 +113,7 @@ class HiwonderRobot:
         if test_z == "home":
             self.move_to_home_position()
         else:
-            self.test_pos = [test_x,test_y,test_z]
+            self.test_pos = [test_x, test_y, test_z]
             self.generate_traj_task_space()
 
         # print(f"---------------------------------------------------------------------")
