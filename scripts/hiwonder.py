@@ -280,7 +280,7 @@ class HiwonderRobot:
             # raise ValueError
             return False
 
-        theta = [11 * degrees(i) / 9 for i in q]
+        theta = [degrees(i) for i in q]
         theta.append(0)
 
         print(
@@ -389,7 +389,7 @@ class HiwonderRobot:
             raise ValueError("Provide 6 joint angles.")
 
         if radians:
-            thetalist = [np.rad2deg(theta) for theta in thetalist]
+            thetalist = [11 * np.rad2deg(theta) / 9 for theta in thetalist]
 
         thetalist = self.enforce_joint_limits(thetalist)
         self.joint_values = thetalist  # updates joint_values with commanded thetalist
