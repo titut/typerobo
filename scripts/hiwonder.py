@@ -86,7 +86,7 @@ class HiwonderRobot:
             ee = EndEffector(
                 *pos, 0, -math.pi / 2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi)
             )
-            self.set_arm_position(ee[0], ee[1], ee[2])
+            self.set_arm_position_analytical(ee[0], ee[1], ee[2])
             time.sleep(0.05)
 
     # -------------------------------------------------------------
@@ -102,10 +102,6 @@ class HiwonderRobot:
 
         if cmd.arm_home:
             self.move_to_home_position()
-        elif cmd.arm_j1:
-            self.move_to_position_1()
-        elif cmd.arm_j2:
-            self.move_to_position_2()
 
         test_x = input("x: ")
         test_y = input("y: ")
@@ -113,11 +109,8 @@ class HiwonderRobot:
         if test_z == "home":
             self.move_to_home_position()
         else:
-            # self.test_pos = [test_x, test_y, test_z]
-            # self.generate_traj_task_space()
-            self.set_arm_position_analytical(
-                float(test_x), float(test_y), float(test_z)
-            )
+            self.test_pos = [test_x, test_y, test_z]
+            self.generate_traj_task_space()
 
         # print(f"---------------------------------------------------------------------")
 
