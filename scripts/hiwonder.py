@@ -294,7 +294,7 @@ class HiwonderRobot:
 
     def set_arm_position_analytical(self, x, y, z):
 
-        for i in range(0, 314, 1):
+        for i in range(120, 180, 1):
             try:
                 theta = [0, -85.04, -64.58, -69.54, 0, 0]
 
