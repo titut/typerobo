@@ -8,7 +8,7 @@ Handles the control of the mobile base and 5-DOF robotic arm using commands rece
 import time
 from math import sin, cos, atan2, radians, degrees, sqrt, acos
 import math
-from utils import wraptopi, EndEffector
+from utils import wraptopi, EndEffector, get_servo_pos
 import numpy as np
 from ros_robot_controller_sdk import Board
 from bus_servo_control import *
@@ -88,13 +88,13 @@ class HiwonderRobot:
         for i in range(50):
             pos = [dof[0][i] for dof in traj_dofs]
             ee = EndEffector(*pos, 0, -math.pi/2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi))
-            print(ee)
+            print([ee.x,ee.y,ee.z])
             # q = [radians(i) for i in self.joint_values]
             # print("Current Pos:")
             # print(self.solve_forward_kinematics(q)[0:3])
-            print("Current Pos:")
-            print(self.joint_values)
-            self.set_arm_position_analytical(ee[0], ee[1], ee[2])
+            # print("Current Pos:")
+            # print(self.joint_values)
+            self.set_arm_position(ee.x, ee.y, ee.z)
             time.sleep(0.05)
 
     # -------------------------------------------------------------
@@ -292,9 +292,9 @@ class HiwonderRobot:
         )
 
         # q = [radians(i) for i in theta]
-        print("Target Pos:")
-        # print(self.solve_forward_kinematics(q)[0:3])
-        print(theta)
+        # print("Target Pos:")
+        # # print(self.solve_forward_kinematics(q)[0:3])
+        # print(theta)
         self.set_joint_values(theta, 50)
 
     def set_arm_position_analytical(self, x, y, z):
@@ -411,7 +411,7 @@ class HiwonderRobot:
             thetalist
         )  # remap the joint values from software to hardware
 
-        print(f"{self.joint_values=}")
+        # print(f"{self.joint_values=}")
 
         positions = []
         for joint_id, theta in enumerate(thetalist, start=1):
