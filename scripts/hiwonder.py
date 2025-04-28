@@ -98,7 +98,8 @@ class HiwonderRobot:
         with open("path.csv", "w", newline="") as f:
             w = csv.writer(f)
             w.writerow(path.keys())
-            w.writerow(path.values())
+            for i in range(len(path["x"])):
+                w.writerow([path["x"][i], path["y"][i], path["z"][i]])
 
     # -------------------------------------------------------------
     # Methods for interfacing with the mobile base
