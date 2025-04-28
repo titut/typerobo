@@ -104,9 +104,9 @@ class HiwonderRobot:
             path["x"].append(ee.x)
             path["y"].append(ee.y)
             path["z"].append(ee.z)
-            path_real["x"].append(ee_experimental.x)
-            path_real["y"].append(ee_experimental.y)
-            path_real["z"].append(ee_experimental.z)
+            path_real["x"].append(ee_experimental[0])
+            path_real["y"].append(ee_experimental[1])
+            path_real["z"].append(ee_experimental[2])
             time.sleep(0.05)
 
         with open("path.csv", "w", newline="") as f:
@@ -320,7 +320,7 @@ class HiwonderRobot:
         # # print(self.solve_forward_kinematics(q)[0:3])
         # print(theta)
         self.set_joint_values(theta, 50)
-	return theta
+        return theta
 
     def set_arm_position_analytical(self, x, y, z):
 
