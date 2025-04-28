@@ -46,11 +46,11 @@ class HiwonderRobot:
             [-120, 30],
         ]
         self.theta_limits = [
-            [-np.pi, np.pi],
-            [-np.pi / 3, np.pi],
-            [-np.pi + np.pi / 12, np.pi - np.pi / 4],
-            [-np.pi + np.pi / 12, np.pi - np.pi / 12],
-            [-np.pi, np.pi],
+            [-np.pi * 9 / 11, np.pi * 9 / 11],
+            [-np.pi / 3 * 9 / 11, np.pi * 9 / 11],
+            [-np.pi + np.pi / 12 * 9 / 11, np.pi - np.pi / 4 * 9 / 11],
+            [-np.pi + np.pi / 12 * 9 / 11, np.pi - np.pi / 12 * 9 / 11],
+            [-np.pi * 9 / 11, np.pi * 9 / 11],
         ]
         self.joint_control_delay = 0.2  # secs
         self.speed_control_delay = 0.2
