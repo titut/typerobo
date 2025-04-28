@@ -83,16 +83,22 @@ class HiwonderRobot:
         traj_dofs = traj.generate(nsteps=50)
 
         path = {"x": [], "y": [], "z": []}
+        path_real = {"x": [], "y": [], "z": []}
 
         for i in range(50):
             pos = [dof[0][i] for dof in traj_dofs]
             ee = EndEffector(
                 *pos, 0, -math.pi / 2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi)
             )
-            self.set_arm_position_analytical(ee[0], ee[1], ee[2])
+            ik_theta = self.set_arm_position(ee[0], ee[1], ee[2])
+            ik_theta = [radians(i) for i in ik_theta]
+            ee_experimental = self.solve_forward_kinematics(ik_theta)
             path["x"].append(ee.x)
             path["y"].append(ee.y)
             path["z"].append(ee.z)
+            path_real["x"].append(ee_experimental.x)
+            path_real["y"].append(ee_experimental.y)
+            path_real["z"].append(ee_experimental.z)
             time.sleep(0.05)
 
         with open("path.csv", "w", newline="") as f:
@@ -100,6 +106,12 @@ class HiwonderRobot:
             w.writerow(path.keys())
             for i in range(len(path["x"])):
                 w.writerow([path["x"][i], path["y"][i], path["z"][i]])
+
+        with open("path_real.csv", "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(path_real.keys())
+            for i in range(len(path_real["x"])):
+                w.writerow([path_real["x"][i], path_real["y"][i], path_real["z"][i]])
 
     # -------------------------------------------------------------
     # Methods for interfacing with the mobile base
