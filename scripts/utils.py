@@ -3,8 +3,14 @@ from dataclasses import dataclass, field
 import math, numpy as np
 from math import sqrt, sin, cos, atan, atan2
 from functools import singledispatch
+from bus_servo_control import BusServoControl
 
 PI = 3.1415926535897932384
+
+def get_servo_pos(servo_id):
+    servos = BusServoControl()
+    current_angle = servos.getBusServoPulse(servo_id)
+    return current_angle
 
 
 @dataclass

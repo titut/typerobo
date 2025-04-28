@@ -10,6 +10,7 @@ from math import sin, cos, atan2, radians, degrees, sqrt, acos
 import math
 from utils import wraptopi, EndEffector, get_servo_pos
 import numpy as np
+import csv
 from ros_robot_controller_sdk import Board
 from bus_servo_control import *
 from trajectory_generator import MultiAxisTrajectoryGenerator
@@ -85,6 +86,8 @@ class HiwonderRobot:
         )
         traj_dofs = traj.generate(nsteps=50)
 
+        path = {"x": [], "y": [], "z": []}
+
         for i in range(50):
             pos = [dof[0][i] for dof in traj_dofs]
             ee = EndEffector(*pos, 0, -math.pi/2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi))
@@ -95,7 +98,17 @@ class HiwonderRobot:
             # print("Current Pos:")
             # print(self.joint_values)
             self.set_arm_position(ee.x, ee.y, ee.z)
+
+            path["x"].append(ee.x)
+            path["y"].append(ee.y)
+            path["z"].append(ee.z)
+
             time.sleep(0.05)
+
+        with open("path.csv", "w", newline="") as f:
+            w = csv.DictWriter(f, path.keys())
+            w.writeheader()
+            w.writerow(path)
 
     # -------------------------------------------------------------
     # Methods for interfacing with the mobile base
