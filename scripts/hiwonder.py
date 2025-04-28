@@ -96,9 +96,9 @@ class HiwonderRobot:
             time.sleep(0.05)
 
         with open("path.csv", "w", newline="") as f:
-            w = csv.DictWriter(f, path.keys())
-            w.writeheader()
-            w.writerow(path)
+            w = csv.writer(f)
+            w.writerow(path.keys())
+            w.writerow(path.values())
 
     # -------------------------------------------------------------
     # Methods for interfacing with the mobile base
