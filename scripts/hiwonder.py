@@ -310,6 +310,7 @@ class HiwonderRobot:
         # # print(self.solve_forward_kinematics(q)[0:3])
         # print(theta)
         self.set_joint_values(theta, 50)
+	return theta
 
     def set_arm_position_analytical(self, x, y, z):
 
