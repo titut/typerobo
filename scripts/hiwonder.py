@@ -136,14 +136,20 @@ class HiwonderRobot:
         if cmd.arm_home:
             self.move_to_home_position()
 
-        test_x = input("x: ")
-        test_y = input("y: ")
-        test_z = input("z: ")
-        if test_z == "home":
-            self.move_to_home_position()
-        else:
-            self.test_pos = [test_x, test_y, test_z]
-            self.generate_traj_task_space()
+        # test_x = input("x: ")
+        # test_y = input("y: ")
+        # test_z = input("z: ")
+        # if test_z == "home":
+        #     self.move_to_home_position()
+        # else:
+        #     self.test_pos = [test_x, test_y, test_z]
+        #     self.generate_traj_task_space()
+
+        test_angle = input("Theta number: ")
+        test_val = input("Value: ")
+
+        self.test_position[int(test_angle)] = int(test_val)
+        self.set_joint_values(self.test_position)
 
         # print(f"---------------------------------------------------------------------")
 
