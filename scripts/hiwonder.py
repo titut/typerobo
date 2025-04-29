@@ -90,8 +90,8 @@ class HiwonderRobot:
             ee = EndEffector(
                 *pos, 0, -math.pi / 2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi)
             )
-            ik_theta = self.set_arm_position(ee[0], ee[1], ee[2])
-            ik_theta = [radians(i) for i in ik_theta]
+            self.set_arm_position(ee[0], ee[1], ee[2])
+            ik_theta = [radians(i) for i in self.joint_values]
             ee_experimental = self.solve_forward_kinematics(ik_theta)
             path["x"].append(ee.x)
             path["y"].append(ee.y)
@@ -127,14 +127,20 @@ class HiwonderRobot:
         if cmd.arm_home:
             self.move_to_home_position()
 
-        test_x = input("x: ")
-        test_y = input("y: ")
-        test_z = input("z: ")
-        if test_z == "home":
-            self.move_to_home_position()
-        else:
-            self.test_pos = [test_x, test_y, test_z]
-            self.generate_traj_task_space()
+        # test_x = input("x: ")
+        # test_y = input("y: ")
+        # test_z = input("z: ")
+        # if test_z == "home":
+        #     self.move_to_home_position()
+        # else:
+        #     self.test_pos = [test_x, test_y, test_z]
+        #     self.generate_traj_task_space()
+
+        test_angle = input("Theta number: ")
+        test_val = input("Value: ")
+
+        self.test_position[int(test_angle)] = int(test_val)
+        self.set_joint_values(self.test_position)
 
         # print(f"---------------------------------------------------------------------")
 
