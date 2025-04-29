@@ -36,7 +36,7 @@ class HiwonderRobot:
 
         self.joint_values = [0, 10, 120, -90, 0, 0]  # degrees
         self.test_position = [0, 0, 90, 0, 0, 0]
-        self.home_position = [0, 0, 90, -30, 0, 0]  # degrees
+        self.home_position = [0, 10, 120, -90, 0, 0]  # degrees
         self.joint_limits = [
             [-120, 120],
             [-90, 90],
