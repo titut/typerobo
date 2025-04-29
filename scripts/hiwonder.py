@@ -34,7 +34,7 @@ class HiwonderRobot:
         self.l1, self.l2, self.l3, self.l4, self.l5 = 0.155, 0.099, 0.095, 0.055, 0.105
         self.cam_offset = 0.045
 
-        self.joint_values = [0, 0, 90, -30, 0, 0]  # degrees
+        self.joint_values = [0, 10, 120, -90, 0, 0]  # degrees
         self.test_position = [0, 0, 90, 0, 0, 0]
         self.home_position = [0, 0, 90, -30, 0, 0]  # degrees
         self.joint_limits = [
