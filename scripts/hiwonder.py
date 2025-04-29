@@ -84,13 +84,14 @@ class HiwonderRobot:
 
         path = {"x": [], "y": [], "z": []}
         path_real = {"x": [], "y": [], "z": []}
+        path_theta_list = []
 
         for i in range(50):
             pos = [dof[0][i] for dof in traj_dofs]
             ee = EndEffector(
                 *pos, 0, -math.pi / 2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi)
             )
-            self.set_arm_position(ee[0], ee[1], ee[2])
+            path_theta_list.append(self.set_arm_position(ee.x, ee.y, ee.z))
             ik_theta = [radians(i) for i in self.joint_values]
             ee_experimental = self.solve_forward_kinematics(ik_theta)
             path["x"].append(ee.x)
@@ -99,7 +100,11 @@ class HiwonderRobot:
             path_real["x"].append(ee_experimental.x)
             path_real["y"].append(ee_experimental.y)
             path_real["z"].append(ee_experimental.z)
-            time.sleep(0.05)
+
+        for i in path_theta_list:
+            move_time = 500
+            self.set_joint_values(i, 500)
+            time.sleep(move_time / 1000)
 
         with open("path.csv", "w", newline="") as f:
             w = csv.writer(f)
