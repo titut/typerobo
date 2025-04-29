@@ -77,19 +77,20 @@ class HiwonderRobot:
         qf = self.test_pos
 
         traj = MultiAxisTrajectoryGenerator(
-            method="cubic",
+            method="quintic",
             mode="task",
             interval=[0, 1],
             ndof=len(q0),
             start_pos=q0,
             final_pos=qf,
         )
-        traj_dofs = traj.generate(nsteps=50)
+        steps = 10
+        traj_dofs = traj.generate(nsteps=steps)
 
         path = {"x": [], "y": [], "z": []}
         path_real = {"x": [], "y": [], "z": []}
 
-        for i in range(50):
+        for i in range(steps):
             pos = [dof[0][i] for dof in traj_dofs]
             ee = EndEffector(*pos, 0, -math.pi/2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi))
             print([ee.x,ee.y,ee.z])
@@ -98,8 +99,8 @@ class HiwonderRobot:
             # print(self.solve_forward_kinematics(q)[0:3])
             # print("Current Pos:")
             # print(self.joint_values)
-            ik_theta = self.set_arm_position(ee.x, ee.y, ee.z)
-            ik_theta = [radians(i) for i in ik_theta]
+            self.set_arm_position(ee.x, ee.y, ee.z)
+            ik_theta = [radians(i) for i in self.joint_values]
             ee_experimental = self.solve_forward_kinematics(ik_theta)
             path["x"].append(ee.x)
             path["y"].append(ee.y)
@@ -107,7 +108,7 @@ class HiwonderRobot:
             path_real["x"].append(ee_experimental[0])
             path_real["y"].append(ee_experimental[1])
             path_real["z"].append(ee_experimental[2])
-            time.sleep(0.05)
+            time.sleep(0.8)
 
         with open("path.csv", "w", newline="") as f:
             w = csv.writer(f)
@@ -319,7 +320,7 @@ class HiwonderRobot:
         # print("Target Pos:")
         # # print(self.solve_forward_kinematics(q)[0:3])
         # print(theta)
-        self.set_joint_values(theta, 50)
+        self.set_joint_values(theta, 500)
         return theta
 
     def set_arm_position_analytical(self, x, y, z):
