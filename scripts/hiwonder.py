@@ -8,7 +8,7 @@ Handles the control of the mobile base and 5-DOF robotic arm using commands rece
 import time
 from math import sin, cos, atan2, radians, degrees, sqrt, acos
 import math
-from utils import wraptopi, EndEffector, get_servo_pos
+from utils import wraptopi, EndEffector
 import numpy as np
 import csv
 from ros_robot_controller_sdk import Board
@@ -46,11 +46,11 @@ class HiwonderRobot:
             [-120, 30],
         ]
         self.theta_limits = [
-            [-np.pi * 9 / 11, np.pi * 9 / 11],
-            [-np.pi / 3 * 9 / 11, np.pi * 9 / 11],
-            [-np.pi + np.pi / 12 * 9 / 11, np.pi - np.pi / 4 * 9 / 11],
-            [-np.pi + np.pi / 12 * 9 / 11, np.pi - np.pi / 12 * 9 / 11],
-            [-np.pi * 9 / 11, np.pi * 9 / 11],
+            [-np.pi, np.pi],
+            [-np.pi / 3, np.pi / 3],
+            [-np.pi + np.pi / 12, np.pi - np.pi / 12],
+            [-np.pi + np.pi / 12, np.pi - np.pi / 12],
+            [-np.pi, np.pi],
         ]
         self.joint_control_delay = 0.2  # secs
         self.speed_control_delay = 0.2
@@ -61,6 +61,12 @@ class HiwonderRobot:
         )
 
         self.move_to_home_position()
+
+    def get_servo_pos(self):
+        current_angle = []
+        for i in range(6):
+            current_angle.append(self.bsc.getBusServoPulse(i+1)[0])
+        return current_angle
 
     def generate_traj_task_space(self):
         """
@@ -84,7 +90,7 @@ class HiwonderRobot:
             start_pos=q0,
             final_pos=qf,
         )
-        steps = 50
+        steps = 20
         traj_dofs = traj.generate(nsteps=steps)
 
         path = {"x": [], "y": [], "z": []}
@@ -94,13 +100,15 @@ class HiwonderRobot:
         for i in range(steps):
             pos = [dof[0][i] for dof in traj_dofs]
             ee = EndEffector(*pos, 0, -math.pi/2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi))
-            print([ee.x,ee.y,ee.z])
+            #print([ee.x,ee.y,ee.z])
             # q = [radians(i) for i in self.joint_values]
             # print("Current Pos:")
             # print(self.solve_forward_kinematics(q)[0:3])
             # print("Current Pos:")
             # print(self.joint_values)
-            path_theta_list.append(self.set_arm_position(ee.x, ee.y, ee.z))
+
+            self.joint_values = self.set_arm_position(ee.x, ee.y, ee.z)
+            path_theta_list.append(self.joint_values)
             ik_theta = [radians(i) for i in self.joint_values]
             ee_experimental = self.solve_forward_kinematics(ik_theta)
             path["x"].append(ee.x)
@@ -110,9 +118,16 @@ class HiwonderRobot:
             path_real["y"].append(ee_experimental[1])
             path_real["z"].append(ee_experimental[2])
         for i in path_theta_list:
-            move_time = 500
-            self.set_joint_values(i, 500)
+            move_time = 300
+            self.set_joint_values(i, move_time)
             time.sleep(move_time / 1000)
+            # print([self.angle_to_pulse(item) for item in i])
+            # print(self.get_servo_pos())
+            # while abs(sum([x - self.angle_to_pulse(y) for x, y in zip(self.get_servo_pos(), i)])) > 100:
+            #     pass
+            # print("Moving!")
+            # joint_position = self.get_servo_pos()
+            # print(joint_position)
 
         with open("path.csv", "w", newline="") as f:
             w = csv.writer(f)
@@ -439,6 +454,8 @@ class HiwonderRobot:
 
         if radians:
             thetalist = [11 * np.rad2deg(theta) / 9 for theta in thetalist]
+        else:
+            thetalist = [11 * theta / 9 for theta in thetalist]
 
         thetalist = self.enforce_joint_limits(thetalist)
         self.joint_values = thetalist  # updates joint_values with commanded thetalist
