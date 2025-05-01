@@ -35,7 +35,6 @@ class HiwonderRobot:
         self.cam_offset = 0.045
 
         self.joint_values = [0, 10, 120, -90, 0, 0]  # degrees
-        self.test_position = [0, 0, 90, 0, 0, 0]
         self.home_position = [0, 10, 120, -90, 0, 0]  # degrees
         self.joint_limits = [
             [-120, 120],
@@ -52,8 +51,6 @@ class HiwonderRobot:
             [-np.pi + np.pi / 12 * 9 / 11, np.pi - np.pi / 12 * 9 / 11],
             [-np.pi * 9 / 11, np.pi * 9 / 11],
         ]
-        self.joint_control_delay = 0.2  # secs
-        self.speed_control_delay = 0.2
         self.time_out = 100
 
         self.cam_DH = self.DH_matrix(np.pi, 0, self.cam_offset, 0) @ self.DH_matrix(
@@ -106,18 +103,6 @@ class HiwonderRobot:
             self.set_joint_values(i, move_time)
             time.sleep(move_time)
 
-        with open("path.csv", "w", newline="") as f:
-            w = csv.writer(f)
-            w.writerow(path.keys())
-            for i in range(len(path["x"])):
-                w.writerow([path["x"][i], path["y"][i], path["z"][i]])
-
-        with open("path_real.csv", "w", newline="") as f:
-            w = csv.writer(f)
-            w.writerow(path_real.keys())
-            for i in range(len(path_real["x"])):
-                w.writerow([path_real["x"][i], path_real["y"][i], path_real["z"][i]])
-
     # -------------------------------------------------------------
     # Methods for interfacing with the mobile base
     # -------------------------------------------------------------
@@ -129,9 +114,6 @@ class HiwonderRobot:
             cmd (GamepadCmds): Command data class with velocities and joint commands.
         """
 
-        if cmd.arm_home:
-            self.move_to_home_position()
-
         test_x = input("x: ")
         test_y = input("y: ")
         test_z = input("z: ")
@@ -140,27 +122,6 @@ class HiwonderRobot:
         else:
             self.test_pos = [test_x, test_y, test_z]
             self.generate_traj_task_space()
-
-        # test_angle = input("Theta number: ")
-        # test_val = input("Value: ")
-
-        # self.test_position[int(test_angle)] = int(test_val)
-        # self.set_joint_values(self.test_position)
-
-        # print(f"---------------------------------------------------------------------")
-
-        # self.set_arm_velocity(cmd)
-
-        ######################################################################
-
-        position = [0] * 3
-
-        ######################################################################
-
-        # update joint values
-        self.update_joint_value()
-
-        # print(f'Joint values: {self.get_joint_values()}')
 
     def solve_forward_kinematics(self, theta):
         """
@@ -337,28 +298,6 @@ class HiwonderRobot:
 
         return pose_world_frame[:3]
 
-    def set_joint_value(self, joint_id: int, theta: float, duration=250, radians=False):
-        """Moves a single joint to a specified angle"""
-        if not (1 <= joint_id <= 6):
-            raise ValueError("Joint ID must be between 1 and 6.")
-
-        if radians:
-            theta = np.rad2deg(theta)
-
-        theta = self.enforce_joint_limits(theta)
-        positions = []
-        for i in range(len(self.joint_values)):
-            if i == joint_id - 1:
-                positions.append([joint_id, self.angle_to_pulse(theta)])
-            else:
-                positions.append([i + 1, self.angle_to_pulse(self.joint_values[i])])
-        self.board.bus_servo_set_position(1, positions)
-
-        print(
-            f"[DEBUG] Moving joint {joint_id} to {theta}° ({self.angle_to_pulse(theta)} pulse)"
-        )
-        time.sleep(self.joint_control_delay)
-
     def set_joint_values(self, thetalist: list, duration=1, radians=False):
         """Moves all arm joints to the given angles.
 
@@ -409,14 +348,6 @@ class HiwonderRobot:
                 res[i] = self.pulse_to_angle(res[i][0])
         self.joint_values = res
 
-    def get_joint_value(self, joint_id: int):
-        """Gets the joint angle"""
-        return self.joint_values[joint_id]
-
-    def get_joint_values(self):
-        """Returns all the joint angle values"""
-        return self.joint_values
-
     def enforce_joint_limits(self, thetalist: list) -> list:
         """Clamps joint angles within their hardware limits.
 
@@ -458,11 +389,6 @@ class HiwonderRobot:
         return round(
             (x - hw_min) * (joint_max - joint_min) / (hw_max - hw_min) + joint_min, 2
         )
-
-    def stop_motors(self):
-        """Stops all motors safely"""
-        self.board.set_motor_speed([0] * 4)
-        print("[INFO] Motors stopped.")
 
     def remap_joints(self, thetalist: list):
         """Reorders angles to match hardware configuration.
