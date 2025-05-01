@@ -102,9 +102,9 @@ class HiwonderRobot:
             path_real["z"].append(ee_experimental.z)
 
         for i in path_theta_list:
-            move_time = 500
-            self.set_joint_values(i, 500)
-            time.sleep(move_time / 1000)
+            move_time = 0.5
+            self.set_joint_values(i, move_time)
+            time.sleep(move_time)
 
         with open("path.csv", "w", newline="") as f:
             w = csv.writer(f)
@@ -320,62 +320,6 @@ class HiwonderRobot:
 
         return theta
 
-    def set_arm_position_analytical(self, x, y, z):
-
-        for i in range(120, 180, 1):
-            try:
-                theta = [0, -85.04, -64.58, -69.54, 0, 0]
-
-                theta[0] = atan2(y, x)
-                print(theta[0])
-                rot_z_theta1 = np.array(
-                    [
-                        [cos(theta[0]), -sin(theta[0]), 0],
-                        [sin(theta[0]), cos(theta[0]), 0],
-                        [0, 0, 1],
-                    ]
-                )
-                rotz = i / 100
-                rot_y = np.array(
-                    [
-                        [cos(rotz), 0, sin(rotz)],
-                        [0, 1, 0],
-                        [-sin(rotz), 0, cos(rotz)],
-                    ]
-                )
-                k = np.transpose(np.array([[0, 0, 1]]))
-                r_06 = rot_z_theta1 @ rot_y
-                t_35 = (self.l4 + self.l5) * r_06 @ k
-
-                p_wrist_x = x - t_35[0]
-                p_wrist_y = y - t_35[1]
-                p_wrist_z = z - t_35[2]
-
-                rx = sqrt(p_wrist_x**2 + p_wrist_y**2)
-                ry = p_wrist_z - self.l1
-
-                theta[2] = -acos(
-                    (rx**2 + ry**2 - self.l2**2 - self.l3**2) / (2 * self.l2 * self.l3)
-                )
-                alpha = atan2(
-                    self.l2 * sin(theta[2]), self.l2 + self.l3 * cos(theta[2])
-                )
-                gamma = atan2(ry, rx)
-                theta[1] = (gamma - alpha) - (np.pi / 2)
-                theta[2] = -theta[2]
-
-                DH = self.calc_DH_matrices(theta)
-                r_03 = (DH[0] @ DH[1] @ DH[2])[:3, :3]
-                r_35 = np.transpose(r_03) @ r_06
-
-                theta[3] = atan2(r_35[0][0], r_35[0][2])
-
-                theta = [degrees(i) for i in theta]
-                self.set_joint_values(theta)
-                break
-            except:
-                pass
-
     def pose_cam2world_frame(self, x, y, z):
         """
         Given x, y, and z in the camera frame, return the respective pose
@@ -415,7 +359,7 @@ class HiwonderRobot:
         )
         time.sleep(self.joint_control_delay)
 
-    def set_joint_values(self, thetalist: list, duration=1000, radians=False):
+    def set_joint_values(self, thetalist: list, duration=1, radians=False):
         """Moves all arm joints to the given angles.
 
         Args:
@@ -438,7 +382,7 @@ class HiwonderRobot:
         for joint_id, theta in enumerate(thetalist, start=1):
             pulse = self.angle_to_pulse(theta)
             positions.append([joint_id, pulse])
-        self.board.bus_servo_set_position(1, positions)
+        self.board.bus_servo_set_position(duration, positions)
 
     def update_joint_value(self, joint_id: int):
         """Gets the joint angle"""
@@ -492,34 +436,6 @@ class HiwonderRobot:
         self.set_joint_values(self.home_position, duration=1000)
         time.sleep(2.0)
         print(f"Arrived at home position: {self.joint_values} \n")
-        time.sleep(1.0)
-        print(f"------------------- System is now ready!------------------- \n")
-
-    def move_to_position_1(self):
-        """
-        Move in square motion
-        """
-        print(f"Moving to position 1...")
-        self.set_joint_values(
-            self.set_arm_position(0.1866, 0.1155, 0.3671),
-            duration=1000,
-        )
-        time.sleep(2.0)
-        print(f"Arrived at position 1: {self.joint_values} \n")
-        time.sleep(1.0)
-        print(f"------------------- System is now ready!------------------- \n")
-
-    def move_to_position_2(self):
-        """
-        Move in square motion
-        """
-        print(f"Moving to position 1...")
-        self.set_joint_values(
-            self.set_arm_position(0.1866, -0.1155, 0.3671),
-            duration=1000,
-        )
-        time.sleep(2.0)
-        print(f"Arrived at position 1: {self.joint_values} \n")
         time.sleep(1.0)
         print(f"------------------- System is now ready!------------------- \n")
 
