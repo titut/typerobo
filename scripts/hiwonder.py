@@ -118,16 +118,9 @@ class HiwonderRobot:
             path_real["y"].append(ee_experimental[1])
             path_real["z"].append(ee_experimental[2])
         for i in path_theta_list:
-            move_time = 300
+            move_time = 0.5
             self.set_joint_values(i, move_time)
-            time.sleep(move_time / 1000)
-            # print([self.angle_to_pulse(item) for item in i])
-            # print(self.get_servo_pos())
-            # while abs(sum([x - self.angle_to_pulse(y) for x, y in zip(self.get_servo_pos(), i)])) > 100:
-            #     pass
-            # print("Moving!")
-            # joint_position = self.get_servo_pos()
-            # print(joint_position)
+            time.sleep(move_time)
 
         with open("path.csv", "w", newline="") as f:
             w = csv.writer(f)
@@ -347,6 +340,7 @@ class HiwonderRobot:
         # print(theta)
         return theta
 
+<<<<<<< HEAD
     def set_arm_position_analytical(self, x, y, z):
 
         for i in range(120, 180, 1):
@@ -403,6 +397,8 @@ class HiwonderRobot:
                 pass
 
 
+=======
+>>>>>>> 29f624d2e58085ba7a706a1fc2e9917b9b3b22ae
     def pose_cam2world_frame(self, x, y, z):
         """
         Given x, y, and z in the camera frame, return the respective pose
@@ -442,7 +438,7 @@ class HiwonderRobot:
         )
         time.sleep(self.joint_control_delay)
 
-    def set_joint_values(self, thetalist: list, duration=1000, radians=False):
+    def set_joint_values(self, thetalist: list, duration=1, radians=False):
         """Moves all arm joints to the given angles.
 
         Args:
@@ -469,7 +465,7 @@ class HiwonderRobot:
         for joint_id, theta in enumerate(thetalist, start=1):
             pulse = self.angle_to_pulse(theta)
             positions.append([joint_id, pulse])
-        self.board.bus_servo_set_position(1, positions)
+        self.board.bus_servo_set_position(duration, positions)
 
     def update_joint_value(self, joint_id: int):
         """Gets the joint angle"""
@@ -523,34 +519,6 @@ class HiwonderRobot:
         self.set_joint_values(self.home_position, duration=1000)
         time.sleep(2.0)
         print(f"Arrived at home position: {self.joint_values} \n")
-        time.sleep(1.0)
-        print(f"------------------- System is now ready!------------------- \n")
-
-    def move_to_position_1(self):
-        """
-        Move in square motion
-        """
-        print(f"Moving to position 1...")
-        self.set_joint_values(
-            self.set_arm_position(0.1866, 0.1155, 0.3671),
-            duration=1000,
-        )
-        time.sleep(2.0)
-        print(f"Arrived at position 1: {self.joint_values} \n")
-        time.sleep(1.0)
-        print(f"------------------- System is now ready!------------------- \n")
-
-    def move_to_position_2(self):
-        """
-        Move in square motion
-        """
-        print(f"Moving to position 1...")
-        self.set_joint_values(
-            self.set_arm_position(0.1866, -0.1155, 0.3671),
-            duration=1000,
-        )
-        time.sleep(2.0)
-        print(f"Arrived at position 1: {self.joint_values} \n")
         time.sleep(1.0)
         print(f"------------------- System is now ready!------------------- \n")
 
