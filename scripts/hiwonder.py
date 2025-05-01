@@ -90,7 +90,7 @@ class HiwonderRobot:
             start_pos=q0,
             final_pos=qf,
         )
-        steps = 20
+        steps = 50
         traj_dofs = traj.generate(nsteps=steps)
 
         path = {"x": [], "y": [], "z": []}
@@ -118,7 +118,7 @@ class HiwonderRobot:
             path_real["y"].append(ee_experimental[1])
             path_real["z"].append(ee_experimental[2])
         for i in path_theta_list:
-            move_time = 0.5
+            move_time = 0.075
             self.set_joint_values(i, move_time)
             time.sleep(move_time)
 
@@ -389,21 +389,18 @@ class HiwonderRobot:
         if len(thetalist) != 6:
             raise ValueError("Provide 6 joint angles.")
 
-        if radians:
-            thetalist = [11 * np.rad2deg(theta) / 9 for theta in thetalist]
-        else:
-            thetalist = [11 * theta / 9 for theta in thetalist]
+        thetalist_real = [11 * theta / 9 for theta in thetalist]
 
-        thetalist = self.enforce_joint_limits(thetalist)
+        thetalist_real = self.enforce_joint_limits(thetalist_real)
         self.joint_values = thetalist  # updates joint_values with commanded thetalist
-        thetalist = self.remap_joints(
-            thetalist
+        thetalist_real = self.remap_joints(
+            thetalist_real
         )  # remap the joint values from software to hardware
 
         # print(f"{self.joint_values=}")
 
         positions = []
-        for joint_id, theta in enumerate(thetalist, start=1):
+        for joint_id, theta in enumerate(thetalist_real, start=1):
             pulse = self.angle_to_pulse(theta)
             positions.append([joint_id, pulse])
         self.board.bus_servo_set_position(duration, positions)
@@ -457,7 +454,7 @@ class HiwonderRobot:
     def move_to_home_position(self):
         time.sleep(2)
         print(f"Moving to home position...")
-        self.set_joint_values(self.home_position, duration=1000)
+        self.set_joint_values(self.home_position, duration=1)
         time.sleep(2.0)
         print(f"Arrived at home position: {self.joint_values} \n")
         time.sleep(1.0)
