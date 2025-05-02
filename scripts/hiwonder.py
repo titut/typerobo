@@ -64,7 +64,7 @@ class HiwonderRobot:
         Generates and visualizes a task-space trajectory using a polynomial interpolator between waypoints.
         """
 
-        print("Following trajectory in task space...")
+        print("Generating trajectory in task space...")
         q = [radians(i) for i in self.joint_values]
         q0 = self.solve_forward_kinematics(q[0, 0:2])
         qf = self.test_pos
@@ -98,10 +98,16 @@ class HiwonderRobot:
             path_real["y"].append(ee_experimental.y)
             path_real["z"].append(ee_experimental.z)
 
+        print("Trajectory generated, starting movement...")
+
         for i in path_theta_list:
             move_time = 0.5
             self.set_joint_values(i, move_time)
             time.sleep(move_time)
+
+        print(f"Arrived at desired location: {qf}")
+
+        print("\n" * 3)
 
     # -------------------------------------------------------------
     # Methods for interfacing with the mobile base
@@ -122,6 +128,7 @@ class HiwonderRobot:
         else:
             self.test_pos = [test_x, test_y, test_z]
             self.generate_traj_task_space()
+            print("\n" * 3)
 
     def solve_forward_kinematics(self, theta):
         """
