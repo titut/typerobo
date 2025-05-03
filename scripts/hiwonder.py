@@ -25,7 +25,9 @@ BASE_LENGTH_Y = 0.105  # meters
 
 class HiwonderRobot:
     def __init__(self):
-        """Initialize motor controllers, servo bus, and default robot states."""
+        """
+        Initialize motor controllers, servo bus, and default robot states and variables.
+        """
         self.board = Board()
         self.board.enable_reception()
         self.bsc = BusServoControl(self.board)
@@ -33,9 +35,17 @@ class HiwonderRobot:
         # lengths of arm
         self.l1, self.l2, self.l3, self.l4, self.l5 = 0.155, 0.099, 0.095, 0.055, 0.105
         self.cam_offset = 0.045
+        self.cam_DH = self.DH_matrix(np.pi, 0, self.cam_offset, 0) @ self.DH_matrix(
+            np.pi / 2, 0, 0, 0
+        )
 
+        # current joint_values
         self.joint_values = [0, 10, 120, -90, 0, 0]  # degrees
+
+        # home position - looking down at the ground
         self.home_position = [0, 10, 120, -90, 0, 0]  # degrees
+
+        # joint limits
         self.joint_limits = [
             [-120, 120],
             [-90, 90],
@@ -51,11 +61,9 @@ class HiwonderRobot:
             [-np.pi + np.pi / 12, np.pi - np.pi / 12],
             [-np.pi, np.pi],
         ]
-        self.time_out = 100
 
-        self.cam_DH = self.DH_matrix(np.pi, 0, self.cam_offset, 0) @ self.DH_matrix(
-            np.pi / 2, 0, 0, 0
-        )
+        # maximum timout
+        self.time_out = 100
 
         self.move_to_home_position()
 
@@ -71,49 +79,51 @@ class HiwonderRobot:
         """
 
         print("Generating trajectory in task space...")
+        # if the desired z value is below 0.1, move first to the location
+        # (x, y, 0.1), then move arm vertically down to (x, y, z)
+        two_part_soln = False
+
+        # solve forward kinematics of current angle
         q = [radians(i) for i in self.joint_values]
-
-        print(q)
         q0 = self.solve_forward_kinematics(q)[0:3]
-        print(q0)
-
         qf = self.test_pos
 
+        if qf[2] < 0.1:
+            two_part_soln = True
+
+        # generate trajectory in task-space
         traj = MultiAxisTrajectoryGenerator(
             method="quintic",
             mode="task",
             interval=[0, 1],
             ndof=len(q0),
             start_pos=q0,
-            final_pos=qf,
+            final_pos=(qf if not two_part_soln else [qf[0], qf[1], 0.1]),
         )
         steps = 25
         traj_dofs = traj.generate(nsteps=steps)
 
-        path = {"x": [], "y": [], "z": []}
-        path_real = {"x": [], "y": [], "z": []}
+        # list of theta values to go to
         path_theta_list = []
 
-        for i in range(steps):
-            pos = [dof[0][i] for dof in traj_dofs]
-            ee = EndEffector(*pos, 0, -math.pi/2, wraptopi(math.atan2(pos[1], pos[0]) + math.pi))
-            #print([ee.x,ee.y,ee.z])
-            # q = [radians(i) for i in self.joint_values]
-            # print("Current Pos:")
-            # print(self.solve_forward_kinematics(q)[0:3])
-            # print("Current Pos:")
-            # print(self.joint_values)
-
-            self.joint_values = self.set_arm_position(ee.x, ee.y, ee.z)
-            path_theta_list.append(self.joint_values)
-            ik_theta = [radians(i) for i in self.joint_values]
-            ee_experimental = self.solve_forward_kinematics(ik_theta)
-            path["x"].append(ee.x)
-            path["y"].append(ee.y)
-            path["z"].append(ee.z)
+        # Convert task-space positions to joint-space
+        for i in range(50):
+            try:
+                pos = [dof[0][i] for dof in traj_dofs]
+                ee = EndEffector(
+                    *pos,
+                    0,
+                    -math.pi / 2,
+                    wraptopi(math.atan2(pos[1], pos[0]) + math.pi),
+                )
+                path_theta_list.append(self.set_arm_position(ee.x, ee.y, ee.z))
+            except Exception as e:
+                print("Desired location is out of bounds")
+                return
 
         print("Trajectory generated, starting movement...")
 
+        # move!
         for i in path_theta_list:
             move_time = 0.15
             self.set_joint_values(i, move_time)
@@ -121,7 +131,7 @@ class HiwonderRobot:
 
         print(f"Arrived at desired location: {qf}")
 
-        print("\n" * 3)
+        print("\n\n")
 
     def set_robot_commands(self, cmd: ut.GamepadCmds):
         """Updates robot base and arm based on gamepad commands.
@@ -138,12 +148,15 @@ class HiwonderRobot:
         else:
             self.test_pos = [test_x, test_y, test_z]
             self.generate_traj_task_space()
-            print("\n" * 3)
+            print("\n\n")
 
     def solve_forward_kinematics(self, theta):
         """
         Given a list of thetas (in radians) calculate its expected position
         in xyz coordinates.
+
+        Args:
+            theta: list of joint-angles in radians
         """
         EE = np.array([0, 0, 0, 1])
 
@@ -156,7 +169,15 @@ class HiwonderRobot:
         return EE
 
     def DH_matrix(self, theta, d, r, alpha):
-        """Calculates DH matrix based on given arguments"""
+        """
+        Calculates DH matrix based on given DH parameters
+
+        Args:
+            theta: rotation around z-axis
+            d: distance in z-axis
+            r: distance in x-axis
+            alpha: rotation around x-axis
+        """
         return np.array(
             [
                 [
@@ -177,7 +198,12 @@ class HiwonderRobot:
         )
 
     def calc_DH_matrices(self, theta):
-        """Calculates all DH Matrices of the system"""
+        """
+        Calculates all DH Matrices of the system
+
+        Args:
+            theta: list of joint values in radians
+        """
         # DH table parameters
         theta_i_table = [
             theta[0],
@@ -190,6 +216,8 @@ class HiwonderRobot:
         r_table = [0, self.l2, self.l3, self.l4, 0]
         alpha_table = [np.pi / 2, np.pi, np.pi, 0, 0]
         DH = np.zeros(shape=(5, 4, 4))
+
+        # Calculate all DH matrices
         for dh_i in range(5):
             if dh_i == 0:
                 DH[dh_i] = self.DH_matrix(
@@ -206,7 +234,12 @@ class HiwonderRobot:
         return DH
 
     def jacobian(self, theta):
-        """Calculate the Jacobian given a list of thetas"""
+        """
+        Calculate the Jacobian given a list of thetas
+
+        Args:
+            theta: list of joint angles in radians
+        """
         DH = self.calc_DH_matrices(theta)
 
         T_cumulative = [np.eye(4)]
@@ -236,13 +269,29 @@ class HiwonderRobot:
         return np.where(np.isclose(jacobian, 0, atol=1e-5), 0, jacobian)
 
     def damped_inverse_jacobian(self, q=None, damping_factor=0.025):
+        """
+        Calculate the damped inverse jacobian given a list of thetas.
+
+        Args:
+            q: list of joint angles in radians
+            damping_factor: float
+        """
         J = self.jacobian(q)
         JT = np.transpose(J)
         I = np.eye(3)
         return JT @ np.linalg.inv(J @ JT + (damping_factor**2) * I)
 
     def set_arm_position(self, x, y, z, tol=1e-3, ilimit=500):
-        """Calculate numerical inverse kinematics based on input coordinates."""
+        """
+        Calculate numerical inverse kinematics based on input coordinates.
+
+        Args:
+            x: float
+            y: float
+            z: float
+            tol (float): acceptable error in resulting ik
+            ilimit (int): max number of iterations
+        """
 
         Te_d = [x, y, z]
 
@@ -306,14 +355,21 @@ class HiwonderRobot:
         """
         Given x, y, and z in the camera frame, return the respective pose
         in the world frame
+
+        Args:
+            x: float
+            y: float
+            z: float
         """
         theta = [radians(i) for i in self.joint_values]
         DH = self.calc_DH_matrices(theta)
 
+        # calculate cumulative transformation matrices
         T_cumulative = [np.eye(4)]
         for i in range(5):
             T_cumulative.append(T_cumulative[-1] @ DH[i])
 
+        # convert cam frame to world frame
         pose_cam_frame = np.array([x, y, z, 1])
         pose_world_frame = T_cumulative[4] @ self.cam_DH @ pose_cam_frame
 
@@ -345,31 +401,6 @@ class HiwonderRobot:
             positions.append([joint_id, pulse])
         self.board.bus_servo_set_position(duration, positions)
 
-    def update_joint_value(self, joint_id: int):
-        """Gets the joint angle"""
-        count = 0
-        while True:
-            res = self.board.bus_servo_read_position(joint_id)
-            count += 1
-            if res is not None:
-                return res
-            if count > self.time_out:
-                return None
-            time.sleep(0.01)
-
-    def update_joint_values(self):
-        """Updates the joint angle values by calling "get_joint_value" for all joints"""
-        res = [self.update_joint_value(i + 1) for i in range(len(self.joint_values))]
-        res = self.remap_joints(res)
-
-        # check for Nones and replace with the previous value
-        for i in range(len(res)):
-            if res[i] is None:
-                res[i] = self.joint_values[i]
-            else:
-                res[i] = self.pulse_to_angle(res[i][0])
-        self.joint_values = res
-
     def enforce_joint_limits(self, thetalist: list) -> list:
         """Clamps joint angles within their hardware limits.
 
@@ -384,20 +415,28 @@ class HiwonderRobot:
         ]
 
     def move_to_home_position(self):
+        """
+        Move the arm to home position
+        """
         time.sleep(2)
-        print(f"Moving to home position...")
-        self.set_joint_values(self.home_position, duration=1)
+        print("Moving to home position...")
+        self.set_joint_values(self.home_position, duration=1000)
         time.sleep(2.0)
         print(f"Arrived at home position: {self.joint_values} \n")
         time.sleep(1.0)
-        print(f"------------------- System is now ready!------------------- \n")
+        print("------------------- System is now ready!------------------- \n")
 
     # -------------------------------------------------------------
     # Utility Functions
     # -------------------------------------------------------------
 
     def angle_to_pulse(self, x: float):
-        """Converts degrees to servo pulse value"""
+        """
+        Converts degrees to servo pulse value
+
+        Args:
+            x (float): angle of joint in degrees
+        """
         hw_min, hw_max = 0, 1000  # Hardware-defined range
         joint_min, joint_max = -150, 150
         return int(
@@ -405,7 +444,12 @@ class HiwonderRobot:
         )
 
     def pulse_to_angle(self, x: float):
-        """Converts servo pulse value to degrees"""
+        """
+        Converts servo pulse value to degrees
+
+        Args:
+            x (float): servo pulse of joint
+        """
         hw_min, hw_max = 0, 1000  # Hardware-defined range
         joint_min, joint_max = -150, 150
         return round(
