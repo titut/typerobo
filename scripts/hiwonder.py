@@ -62,6 +62,9 @@ class HiwonderRobot:
             [-np.pi * 9 / 11, np.pi * 9 / 11],
         ]
 
+        # testing position
+        self.test_pos = [0.25, 0, 0.25]
+
         # maximum timout
         self.time_out = 100
 
@@ -160,12 +163,14 @@ class HiwonderRobot:
         test_x = input("x: ")
         test_y = input("y: ")
         test_z = input("z: ")
+        print("\n\n")
         if test_z == "home":
             self.move_to_home_position()
         else:
             self.test_pos = [float(test_x), float(test_y), float(test_z)]
             self.generate_traj_task_space()
-            print("\n\n")
+            time.sleep(0.5)
+            self.move_to_home_position()
 
     def solve_forward_kinematics(self, theta):
         """
