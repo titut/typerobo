@@ -73,11 +73,18 @@ class HiwonderRobot:
         """
 
         print("Generating trajectory in task space...")
+        # if the desired z value is below 0.1, move first to the location
+        # (x, y, 0.1), then move arm vertically down to (x, y, z)
+        two_part_soln = False
+
         # solve forward kinematics of current angle
         q = [radians(i) for i in self.joint_values]
         q0 = self.solve_forward_kinematics(q[0, 0:2])
 
         qf = self.test_pos
+
+        if qf[2] < 0.1:
+            two_part_soln = True
 
         # generate trajectory in task-space
         traj = MultiAxisTrajectoryGenerator(
@@ -86,7 +93,7 @@ class HiwonderRobot:
             interval=[0, 1],
             ndof=len(q0),
             start_pos=q0,
-            final_pos=qf,
+            final_pos=(qf if not two_part_soln else [qf[0], qf[1], 0.1]),
         )
         traj_dofs = traj.generate(nsteps=50)
 
