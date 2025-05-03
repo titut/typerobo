@@ -107,7 +107,7 @@ class HiwonderRobot:
         path_theta_list = []
 
         # Convert task-space positions to joint-space
-        for i in range(50):
+        for i in range(steps):
             pos = [dof[0][i] for dof in traj_dofs]
             ee = EndEffector(
                 *pos,
@@ -416,7 +416,7 @@ class HiwonderRobot:
         """
         time.sleep(2)
         print("Moving to home position...")
-        self.set_joint_values(self.home_position, duration=1000)
+        self.set_joint_values(self.home_position, duration=1)
         time.sleep(2.0)
         print(f"Arrived at home position: {self.joint_values} \n")
         time.sleep(1.0)
