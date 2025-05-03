@@ -20,20 +20,7 @@ import utils
 
 # Initialize components
 cmdlist = []  # Stores recent gamepad commands
-gpc = GamepadControl()
 robot = HiwonderRobot()
-
-
-def monitor_gamepad():
-    """Continuously reads gamepad inputs and stores the latest command."""
-    try:
-        while True:
-            if len(cmdlist) > 2:
-                cmdlist.pop(0)  # Retain only the latest two commands
-            cmdlist.append(gpc.get_gamepad_cmds())
-            time.sleep(0.001)
-    except KeyboardInterrupt:
-        print("[INFO] Gamepad monitoring stopped.")
 
 
 def shutdown_robot():

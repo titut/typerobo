@@ -1,60 +1,116 @@
 # Typerobo: A Robot that Presses Buttons for You
 
-Typerobo is a repository that provides software for the Hiwonder 5-DOF mobile manipulator to 
+Typerobo is a repository that provides software for the Hiwonder 5-DOF mobile manipulator to detect colorred buttons and press them. The project consists of three key parts: numerical inverse kinematics (IK), trajectory generation, and computer vision. 
 
-<img src = "media/hiwonder.png" width="" height="400">
+Numerical inverse kinematics is used to calculate servo joint angles given a desired cartesian 3D coordinate in the robot frame. This allows Typerobo to precisely reach desired location within ±1 cm. 
 
-## Setting up the onboard Raspberry Pi
+Trajectory generation is used to plan out a straight line path from the robots current location to the desired location (where the button is). We have implemented and tested the cubic and quintic method which can be swapped out for each other modularly. 
+
+<img src="media/Trajectory.gif" width="300">
+
+We used a mixture of classical computer vision techniques and pose estimation with Aruco tags to identify the colorred buttons. The classical CV techniques segmented images based on HSV values to detect different colors identifying the buttons. We then perform pose estimation based on the Aruco tag's on the button. Using kinematics techniques, the pose (in the camera frame) is transformed into the robot frame to be used for trajectory generation.
+
+<img src="media/CV.png" width="500">
+
+The hardware we are using is a 5-DOF mobile manipulator provided by Hiwonder. The OS is [ask Dom].
+
+<img src="media/hiwonder.png" width="500">
+
+### Demo Video
+
+<video width="320" height="240" controls>
+  <source src="video.mov" type="video/mp4">
+</video>
+
+## How to install/setup on Raspberry Pi
 
 #### Step 0: Connect to Raspberry Pi over SSH
-- Run `ssh funrobot@funrobot#.local` in terminal, replacing `#` with the number of your SD card.
-  [Find your SD card number](https://docs.google.com/spreadsheets/d/1oiZmZgGmFAW9nbCus0FoESnCpqEN_4TZb9X0I5U4Vjc/).
-  **The password is `FunR0b0!`** 
+- Run `ssh pi@[robot-name].local` in terminal. (We used pippi for this project)
+  **The password is `fun`** 
 - SSH troubleshooting:
   - Make sure you are connected to the Olin Robotics network (It should work on Olin, but Olin Robotics may be faster/more stable).
   - Make sure OpenSSH Client and OpenSSH Server are installed (should be installed by default on Mac/Linux, may need to be installed under `Settings > System > Optional Features` in Windows).
   - Make sure the OpenSSH folder is added to your path. Should be `C:\Windows\System32\OpenSSH` in Windows.
   - Check the SD card to make sure the number physically written on it matches what you expect.
 
-#### Step 1: Create a virtual environment
+
+#### Step 1: Clone or fork v2025 branch of this repository
+- If you are cloning, use this code
+```bash
+#navigate to workspace folder
+$ cd [path-to-workspace-folder]
+
+# clone the v2025 branch of the project
+$ git clone -b v2025 https://github.com/titut/typerobo.git
+```
+
+#### Step 2: Create a virtual environment in typerobo directory
 - We strongly recommend that you create a new python virtual environment for all your work on the platform.
 - Follow this [tutorial here](https://docs.python.org/3/tutorial/venv.html).
+- If you have **already installed** virtual environment and **using ubuntu**, for a simple venv set up, use this code here
+```bash
+# navigate to typerobo directory
+$ cd typerobo
 
+# initialize a virtual environment in the typerobo directory
+$ python3 -m venv venv
 
-#### Step 2: Get this repository from Github
-- I recommend you fork this repository to the account of one of your teammates and then you all can clone from the forked version.
-- Follow [this tutorial](https://ftc-docs.firstinspires.org/en/latest/programming_resources/tutorial_specific/android_studio/fork_and_clone_github_repository/Fork-and-Clone-From-GitHub.html) to understand how to fork and clone repositories
+# activate the virtual environment
+$ source venv/bin/activate
+```
 
 
 #### Step 3: Install all required Python packages
 ```bash
-# first: make sure you have activated the virtual environment. See step 1 tutorial
+# first: make sure you have activated the virtual environment. See step 2
 
-# cd to the project folder
-$ cd hiwonder-armpi-pro
+# second: make sure you are in the typerobot directory 
 
 # install all required packages from requirements.txt
 $ pip install -r requirements.txt
 ```
 
+## How to run
 
-### How to Run
-
-- Before you run any script, please initialize the **pigpiod module**
+Before you run any script, please initialize the **pigpiod module**
 ``` bash
 $ sudo pigpiod
 ```
 
-- If setup worked well, you should be able to run the main script with the command below:
+If setup worked well, you should be able to run the main script with the command below:
 ``` bash
-$ sudo venv/bin/python main.py 
-# this runs the main script using admin privileges and the virtual environment's python interpreter.
-# N.B.: Please make sure you set the right path for your virtual environment's python interpreter above
+# activate the virtual environment
+$ source [path-to-typerobo]/venv/bin/activate
+
+# run the main script.
+$ python3 main.py 
 ```
 
-### Usage Guide
+## Usage Guide
 
-<img src = "media/jstick-manual-1.png" height="300"> 
-<img src = "media/jstick-manual-2.png" height="330">
+Once you have run
+``` python3 main.py```, check whether the home position looks like this.
 
+<img src="media/home_pos.jpg" width="500">
 
+Then, in the terminal you'll see a place to input the colorred button you want typerobo to press.
+
+```bash
+$ Color: [insert-color-here]
+```
+
+The available options are "red" and "blue". **You can also input "home" to command the typerobo to return to the home position**
+
+#### IT'S THAT SIMPLE!
+
+## Customizable Components
+
+There are a few parameters that you can customize in typerobo. All these changes will take place in `/scripts/hiwonder.py`.
+
+### Trajectory Generation Method
+
+### Trajectory Generation Steps
+
+### Arm speed
+
+### Home position
