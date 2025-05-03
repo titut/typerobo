@@ -70,7 +70,7 @@ class HiwonderRobot:
         Generates and visualizes a task-space trajectory using a polynomial interpolator between waypoints.
         """
 
-        print("Following trajectory in task space...")
+        print("Generating trajectory in task space...")
         q = [radians(i) for i in self.joint_values]
 
         print(q)
@@ -87,7 +87,7 @@ class HiwonderRobot:
             start_pos=q0,
             final_pos=qf,
         )
-        steps = 50
+        steps = 25
         traj_dofs = traj.generate(nsteps=steps)
 
         path = {"x": [], "y": [], "z": []}
@@ -111,17 +111,17 @@ class HiwonderRobot:
             path["x"].append(ee.x)
             path["y"].append(ee.y)
             path["z"].append(ee.z)
-            path_real["x"].append(ee_experimental[0])
-            path_real["y"].append(ee_experimental[1])
-            path_real["z"].append(ee_experimental[2])
-        for i in path_theta_list:
-            move_time = 0.075
-            self.set_joint_values(i, move_time)
-            time.sleep(move_time)
 
-    # -------------------------------------------------------------
-    # Methods for interfacing with the mobile base
-    # -------------------------------------------------------------
+        print("Trajectory generated, starting movement...")
+
+        for i in path_theta_list:
+            move_time = 0.15
+            self.set_joint_values(i, move_time)
+            time.sleep(move_time*1.1)
+
+        print(f"Arrived at desired location: {qf}")
+
+        print("\n" * 3)
 
     def set_robot_commands(self, cmd: ut.GamepadCmds):
         """Updates robot base and arm based on gamepad commands.
@@ -138,6 +138,7 @@ class HiwonderRobot:
         else:
             self.test_pos = [test_x, test_y, test_z]
             self.generate_traj_task_space()
+            print("\n" * 3)
 
     def solve_forward_kinematics(self, theta):
         """
