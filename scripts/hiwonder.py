@@ -102,18 +102,14 @@ class HiwonderRobot:
 
         # Convert task-space positions to joint-space
         for i in range(50):
-            try:
-                pos = [dof[0][i] for dof in traj_dofs]
-                ee = EndEffector(
-                    *pos,
-                    0,
-                    -math.pi / 2,
-                    wraptopi(math.atan2(pos[1], pos[0]) + math.pi),
-                )
-                path_theta_list.append(self.set_arm_position(ee.x, ee.y, ee.z))
-            except Exception as e:
-                print("Desired location is out of bounds")
-                return
+            pos = [dof[0][i] for dof in traj_dofs]
+            ee = EndEffector(
+                *pos,
+                0,
+                -math.pi / 2,
+                wraptopi(math.atan2(pos[1], pos[0]) + math.pi),
+            )
+            path_theta_list.append(self.set_arm_position(ee.x, ee.y, ee.z))
 
         print("Trajectory generated, starting movement...")
 
