@@ -393,7 +393,7 @@ class HiwonderRobot:
 
         return pose_world_frame[:3]
 
-    def set_joint_values(self, thetalist: list, duration=1, radians=False):
+    def set_joint_values(self, thetalist: list, duration=1):
         """Moves all arm joints to the given angles.
 
         Args:
@@ -403,8 +403,7 @@ class HiwonderRobot:
         if len(thetalist) != 6:
             raise ValueError("Provide 6 joint angles.")
 
-        if radians:
-            thetalist = [11 * np.rad2deg(theta) / 9 for theta in thetalist]
+        thetalist = [11 * theta / 9 for theta in thetalist]
 
         thetalist = self.enforce_joint_limits(thetalist)
         self.joint_values = thetalist  # updates joint_values with commanded thetalist
@@ -437,7 +436,7 @@ class HiwonderRobot:
         """
         time.sleep(2)
         print("Moving to home position...")
-        self.set_joint_values(self.home_position, duration=1000)
+        self.set_joint_values(self.home_position, duration=1)
         time.sleep(2.0)
         print(f"Arrived at home position: {self.joint_values} \n")
         time.sleep(1.0)
