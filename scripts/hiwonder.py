@@ -65,6 +65,9 @@ class HiwonderRobot:
             [-np.pi, np.pi],
         ]
 
+        # testing position
+        self.test_pos = [0.25, 0, 0.25]
+
         # maximum timout
         self.time_out = 100
 
@@ -165,12 +168,14 @@ class HiwonderRobot:
         test_x = input("x: ")
         test_y = input("y: ")
         test_z = input("z: ")
+        print("\n\n")
         if test_z == "home":
             self.move_to_home_position()
         else:
             self.test_pos = [float(test_x), float(test_y), float(test_z)]
             self.generate_traj_task_space()
-            print("\n\n")
+            time.sleep(0.5)
+            self.move_to_home_position()
 
     def button_select(self, cmd: ut.GamepadCmds):
         camera = Camera_dummy()
@@ -411,7 +416,7 @@ class HiwonderRobot:
 
         return pose_world_frame[:3]
 
-    def set_joint_values(self, thetalist: list, duration=1, radians=False):
+    def set_joint_values(self, thetalist: list, duration=1):
         """Moves all arm joints to the given angles.
 
         Args:

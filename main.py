@@ -56,20 +56,13 @@ def main():
     """Main loop that reads gamepad commands and updates the robot accordingly."""
     try:
         # Start the gamepad monitoring thread
-        gamepad_thread = threading.Thread(target=monitor_gamepad, daemon=True)
-        gamepad_thread.start()
 
         control_interval = 0.25  # Seconds per control cycle
 
         while True:
             cycle_start = time.time()
 
-            if cmdlist:
-                latest_cmd = cmdlist[-1]
-                # accessing the utility button, LB, on the gamepad (uncomment code below to use)
-                # print(f'Utility Button is [ {latest_cmd.utility_btn} ]')
-
-                robot.button_select(latest_cmd)
+            robot.set_robot_commands([])
 
             elapsed = time.time() - cycle_start
             remaining_time = control_interval - elapsed
