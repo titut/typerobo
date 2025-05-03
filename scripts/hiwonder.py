@@ -14,6 +14,7 @@ import csv
 from ros_robot_controller_sdk import Board
 from bus_servo_control import *
 from trajectory_generator import MultiAxisTrajectoryGenerator
+from cv_dummy import Camera_dummy
 
 import utils as ut
 
@@ -35,15 +36,17 @@ class HiwonderRobot:
         # lengths of arm
         self.l1, self.l2, self.l3, self.l4, self.l5 = 0.155, 0.099, 0.095, 0.055, 0.105
         self.cam_offset = 0.045
-        self.cam_DH = self.DH_matrix(np.pi, 0, self.cam_offset, 0) @ self.DH_matrix(
-            np.pi / 2, 0, 0, 0
+        self.cam_DH = (
+            self.DH_matrix(np.pi / 2, 0, 0, 0)
+            @ self.DH_matrix(np.pi / 2, 0, 0, 0)
+            @ self.DH_matrix(0, 0, self.cam_offset, 0)
         )
 
         # current joint_values
         self.joint_values = [0, 10, 120, -90, 0, 0]  # degrees
 
         # home position - looking down at the ground
-        self.home_position = [0, 10, 120, -90, 0, 0]  # degrees
+        self.home_position = [0, 10, 98, -81, 0, 0]  # degrees
 
         # joint limits
         self.joint_limits = [
@@ -87,6 +90,7 @@ class HiwonderRobot:
         q = [radians(i) for i in self.joint_values]
         q0 = self.solve_forward_kinematics(q)[0:3]
         qf = self.test_pos
+        qf[2] = qf[2] + 0.02
 
         if qf[2] < 0.1:
             two_part_soln = True
@@ -167,6 +171,20 @@ class HiwonderRobot:
             self.test_pos = [float(test_x), float(test_y), float(test_z)]
             self.generate_traj_task_space()
             print("\n\n")
+
+    def button_select(self, cmd: ut.GamepadCmds):
+        camera = Camera_dummy()
+        button_color = input("Button Color: ")
+        if button_color == "blue":
+            tag_pose = camera.blue_press()
+        elif button_color == "red":
+            tag_pose = camera.red_press()
+        self.test_pos = self.pose_cam2world_frame(tag_pose[0],tag_pose[1],tag_pose[2])
+        print(f"{tag_pose=}")
+        print(f"{self.test_pos=}")
+        self.generate_traj_task_space()
+        time.sleep(0.5)
+        self.move_to_home_position()
 
     def solve_forward_kinematics(self, theta):
         """
