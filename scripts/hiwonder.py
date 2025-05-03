@@ -115,7 +115,29 @@ class HiwonderRobot:
                 -math.pi / 2,
                 wraptopi(math.atan2(pos[1], pos[0]) + math.pi),
             )
-            path_theta_list.append(self.set_arm_position(ee.x, ee.y, ee.z))
+            self.joint_values = self.set_arm_position(ee.x, ee.y, ee.z)
+            path_theta_list.append(self.joint_values)
+
+        if two_part_soln:
+            traj2 = MultiAxisTrajectoryGenerator(
+                method="quintic",
+                mode="task",
+                interval=[0, 1],
+                ndof=len(q0),
+                start_pos=[qf[0], qf[1], 0.1],
+                final_pos=qf,
+            )
+            traj2_dofs = traj2.generate(nsteps=steps)
+            for i in range(steps):
+                pos = [dof[0][i] for dof in traj2_dofs]
+                ee = EndEffector(
+                    *pos,
+                    0,
+                    -math.pi / 2,
+                    wraptopi(math.atan2(pos[1], pos[0]) + math.pi),
+                )
+                self.joint_values = self.set_arm_position(ee.x, ee.y, ee.z)
+                path_theta_list.append(self.joint_values)
 
         print("Trajectory generated, starting movement...")
 
