@@ -95,13 +95,14 @@ class HiwonderRobot:
             start_pos=q0,
             final_pos=(qf if not two_part_soln else [qf[0], qf[1], 0.1]),
         )
-        traj_dofs = traj.generate(nsteps=50)
+        steps = 25
+        traj_dofs = traj.generate(nsteps=steps)
 
         # list of theta values to go to
         path_theta_list = []
 
         # Convert task-space positions to joint-space
-        for i in range(50):
+        for i in range(steps):
             pos = [dof[0][i] for dof in traj_dofs]
             ee = EndEffector(
                 *pos,
@@ -109,7 +110,29 @@ class HiwonderRobot:
                 -math.pi / 2,
                 wraptopi(math.atan2(pos[1], pos[0]) + math.pi),
             )
-            path_theta_list.append(self.set_arm_position(ee.x, ee.y, ee.z))
+            self.joint_values = self.set_arm_position(ee.x, ee.y, ee.z)
+            path_theta_list.append(self.joint_values)
+
+        if two_part_soln:
+            traj2 = MultiAxisTrajectoryGenerator(
+                method="quintic",
+                mode="task",
+                interval=[0, 1],
+                ndof=len(q0),
+                start_pos=[qf[0], qf[1], 0.1],
+                final_pos=qf,
+            )
+            traj2_dofs = traj2.generate(nsteps=steps)
+            for i in range(steps):
+                pos = [dof[0][i] for dof in traj2_dofs]
+                ee = EndEffector(
+                    *pos,
+                    0,
+                    -math.pi / 2,
+                    wraptopi(math.atan2(pos[1], pos[0]) + math.pi),
+                )
+                self.joint_values = self.set_arm_position(ee.x, ee.y, ee.z)
+                path_theta_list.append(self.joint_values)
 
         print("Trajectory generated, starting movement...")
 
