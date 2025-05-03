@@ -7,11 +7,6 @@ from bus_servo_control import BusServoControl
 
 PI = 3.1415926535897932384
 
-def get_servo_pos(servo_id):
-    servos = BusServoControl()
-    current_angle = servos.getBusServoPulse(servo_id)
-    return current_angle
-
 
 @dataclass
 class State:

@@ -176,9 +176,9 @@ class HiwonderRobot:
         camera = Camera_dummy()
         button_color = input("Button Color: ")
         if button_color == "blue":
-            tag_pose = camera.blue_press()
+            tag_pose = camera.color_pose(1)
         elif button_color == "red":
-            tag_pose = camera.red_press()
+            tag_pose = camera.color_pose(0)
         self.test_pos = self.pose_cam2world_frame(tag_pose[0],tag_pose[1],tag_pose[2])
         print(f"{tag_pose=}")
         print(f"{self.test_pos=}")
