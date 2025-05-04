@@ -189,8 +189,8 @@ class HiwonderRobot:
             tag_pose = camera.color_pose(1)
         elif button_color == "red":
             tag_pose = camera.color_pose(0)
-        self.test_pos = self.pose_cam2world_frame(tag_pose[0], tag_pose[1], tag_pose[2])
         print(f"{tag_pose=}")
+        self.test_pos = self.pose_cam2world_frame(tag_pose[0], tag_pose[1], tag_pose[2])
         print(f"{self.test_pos=}")
         self.generate_traj_task_space()
         time.sleep(0.5)

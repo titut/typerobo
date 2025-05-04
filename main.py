@@ -49,7 +49,7 @@ def main():
         while True:
             cycle_start = time.time()
 
-            robot.set_robot_commands([])
+            robot.button_select([])
 
             elapsed = time.time() - cycle_start
             remaining_time = control_interval - elapsed
