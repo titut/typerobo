@@ -65,6 +65,12 @@ class HiwonderRobot:
             [-np.pi, np.pi],
         ]
 
+        # Trajectory Generation Settings
+        self.trajectory_method = "quintic"
+        self.trapezoidal_speed = 0
+        self.trajectory_steps = 25
+        self.move_time = 4  # seconds
+
         # testing position
         self.test_pos = [0.25, 0, 0.25]
 
@@ -76,7 +82,7 @@ class HiwonderRobot:
     def get_servo_pos(self):
         current_angle = []
         for i in range(6):
-            current_angle.append(self.bsc.getBusServoPulse(i+1)[0])
+            current_angle.append(self.bsc.getBusServoPulse(i + 1)[0])
         return current_angle
 
     def generate_traj_task_space(self):
@@ -100,21 +106,20 @@ class HiwonderRobot:
 
         # generate trajectory in task-space
         traj = MultiAxisTrajectoryGenerator(
-            method="quintic",
+            method=self.trajectory_method,
             mode="task",
             interval=[0, 1],
             ndof=len(q0),
             start_pos=q0,
             final_pos=(qf if not two_part_soln else [qf[0], qf[1], 0.1]),
         )
-        steps = 25
-        traj_dofs = traj.generate(nsteps=steps)
+        traj_dofs = traj.generate(nsteps=self.trajectory_steps)
 
         # list of theta values to go to
         path_theta_list = []
 
         # Convert task-space positions to joint-space
-        for i in range(steps):
+        for i in range(self.trajectory_steps):
             pos = [dof[0][i] for dof in traj_dofs]
             ee = EndEffector(
                 *pos,
@@ -127,15 +132,15 @@ class HiwonderRobot:
 
         if two_part_soln:
             traj2 = MultiAxisTrajectoryGenerator(
-                method="quintic",
+                method=self.trajectory_method,
                 mode="task",
                 interval=[0, 1],
                 ndof=len(q0),
                 start_pos=[qf[0], qf[1], 0.1],
                 final_pos=qf,
             )
-            traj2_dofs = traj2.generate(nsteps=steps)
-            for i in range(steps):
+            traj2_dofs = traj2.generate(nsteps=self.trajectory_steps)
+            for i in range(self.trajectory_steps):
                 pos = [dof[0][i] for dof in traj2_dofs]
                 ee = EndEffector(
                     *pos,
@@ -150,9 +155,9 @@ class HiwonderRobot:
 
         # move!
         for i in path_theta_list:
-            move_time = 0.15
+            move_time = self.move_time / self.trajectory_steps
             self.set_joint_values(i, move_time)
-            time.sleep(move_time*1.1)
+            time.sleep(move_time * 1.1)
 
         print(f"Arrived at desired location: {qf}")
 
@@ -184,7 +189,7 @@ class HiwonderRobot:
             tag_pose = camera.color_pose(1)
         elif button_color == "red":
             tag_pose = camera.color_pose(0)
-        self.test_pos = self.pose_cam2world_frame(tag_pose[0],tag_pose[1],tag_pose[2])
+        self.test_pos = self.pose_cam2world_frame(tag_pose[0], tag_pose[1], tag_pose[2])
         print(f"{tag_pose=}")
         print(f"{self.test_pos=}")
         self.generate_traj_task_space()

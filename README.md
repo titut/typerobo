@@ -4,7 +4,7 @@ Typerobo is a repository that provides software for the Hiwonder 5-DOF mobile ma
 
 Numerical inverse kinematics is used to calculate servo joint angles given a desired cartesian 3D coordinate in the robot frame. This allows Typerobo to precisely reach desired location within ±1 cm. 
 
-Trajectory generation is used to plan out a straight line path from the robots current location to the desired location (where the button is). We have implemented and tested the cubic and quintic method which can be swapped out for each other modularly. 
+Trajectory generation is used to plan out a straight line path from the robots current location to the desired location (where the button is). We have implemented and tested the cubic quintic, or trapezoidal method which can be swapped out for each other modularly. 
 
 <img src="media/Trajectory.gif" width="300">
 
@@ -18,9 +18,7 @@ The hardware we are using is a 5-DOF mobile manipulator provided by Hiwonder. Th
 
 ### Demo Video
 
-<video width="320" height="240" controls>
-  <source src="video.mov" type="video/mp4">
-</video>
+<video src="media/demo.mp4" controls></video>
 
 ## How to install/setup on Raspberry Pi
 
@@ -109,8 +107,39 @@ There are a few parameters that you can customize in typerobo. All these changes
 
 ### Trajectory Generation Method
 
+You can select from three different trajectory generation method: cubic, quintic (default), and trapezoidal. The cubic and quintic methods are interchangeable. However, we recommend using the quintic method as that ensures continuous acceleration. The trapezoidal method allows for more flexibility in controlling the overall speed of the arm. But, because of that, it will require you to set a speed on top of the trajectory method.
+
+To change the trajectory method go to **line 69**, and edit the variable
+
+```python
+self.trajectory_method = [insert-method-here]
+# if selected "trapezoidal, you have to change this too
+self.trapezoidal_speed = [insert-speed-here]
+```
+
 ### Trajectory Generation Steps
 
-### Arm speed
+Another part of the trajectory generation you can edit is the amount of steps to generate. The default value is 25. To edit this value, go to **line 71**.
+
+```python
+self.trajectory_steps = [insert-number-here]
+```
+
+NOTE: a higher steps value will increase the accuracy of the path generated. However, it will increase computational time.
+
+### Path move time
+
+You can also change how fast you want the arm to move towards the desired location. To do this, go to **line 72**. The time is measured in seconds.
+
+```python
+self.move_time = [insert-time-here]
+```
 
 ### Home position
+
+Lastly, you can edit the home position so that the camera angle is different. To do this, go to line **line 49**.
+
+```python
+self.home_position = [theta1, theta2, theta3, theta4, theta5, 0]
+# NOTE: the sixth angle is to open and close the claw, which we won't be using in this project
+```
