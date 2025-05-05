@@ -12,13 +12,13 @@ We used a mixture of classical computer vision techniques and pose estimation wi
 
 <img src="media/CV.png" width="500">
 
-The hardware we are using is a 5-DOF mobile manipulator provided by Hiwonder. The OS is [ask Dom].
+The hardware we are using is a 5-DOF mobile manipulator provided by Hiwonder. The OS is Raspberry Pi Debian 12 (Bookworm).
 
 <img src="media/hiwonder.png" width="500">
 
 ### Demo Video
 
-<video src="media/demo.mp4" controls></video>
+<video src="media/demo_vid.mp4" controls></video>
 
 ## How to install/setup on Raspberry Pi
 
