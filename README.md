@@ -19,6 +19,7 @@ The hardware we are using is a 5-DOF mobile manipulator provided by Hiwonder. Th
 ### Demo Video
 
 <video src="media/demo_vid.mp4" controls></video>
+Link: https://youtu.be/0DvdSz123H4
 
 ## How to install/setup on Raspberry Pi
 
