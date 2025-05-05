@@ -8,7 +8,7 @@ Trajectory generation is used to plan out a straight line path from the robots c
 
 <img src="media/Trajectory.gif" width="300">
 
-We used a mixture of classical computer vision techniques and pose estimation with Aruco tags to identify the colorred buttons. The classical CV techniques segmented images based on HSV values to detect different colors identifying the buttons. We then perform pose estimation based on the Aruco tag's on the button. Using kinematics techniques, the pose (in the camera frame) is transformed into the robot frame to be used for trajectory generation.
+We used a mixture of classical computer vision techniques and pose estimation with Aruco tags to identify the colored buttons. The classical CV techniques segmented images based on HSV values to detect different colors identifying the buttons. We then perform pose estimation based on the Aruco tag's on the button. Using kinematics techniques, the pose (in the camera frame) is transformed into the robot frame to be used for trajectory generation.
 
 <img src="media/CV.png" width="500">
 
