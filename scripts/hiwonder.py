@@ -37,8 +37,7 @@ class HiwonderRobot:
         self.l1, self.l2, self.l3, self.l4, self.l5 = 0.155, 0.099, 0.095, 0.055, 0.105
         self.cam_offset = 0.045
         self.cam_DH = (
-            self.DH_matrix(np.pi / 2, 0, 0, 0)
-            @ self.DH_matrix(np.pi / 2, 0, 0, 0)
+            self.DH_matrix(np.pi, 0, 0, 0)
             @ self.DH_matrix(0, 0, self.cam_offset, 0)
         )
 
